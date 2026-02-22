@@ -106,7 +106,16 @@ export function NeoSidebar({ className, ...props }: React.HTMLAttributes<HTMLDiv
                             </h4>
                             <div className="space-y-1">
                                 {group.items.map((item) => {
-                                    const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/admin');
+                                    const allItems = NAVIGATION.flatMap(g => g.items);
+                                    const isActive = pathname === item.href || (
+                                        pathname.startsWith(item.href) &&
+                                        item.href !== '/admin' &&
+                                        !allItems.some(other =>
+                                            other.href !== item.href &&
+                                            pathname.startsWith(other.href) &&
+                                            other.href.length > item.href.length
+                                        )
+                                    );
                                     return (
                                         <Link key={item.href} href={item.href}>
                                             <div className={cn(
