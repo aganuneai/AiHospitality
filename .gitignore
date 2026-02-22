@@ -28,7 +28,7 @@ web/*.tsbuildinfo
 .claude/settings.local.json
 
 # Workspace Specific
-DOC/
 *.webp
 *.png
+# Allow documentation
 !DOC/*.md
