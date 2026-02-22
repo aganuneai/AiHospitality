@@ -1,0 +1,50 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mD:/Antigravity/AiHospitality/web[39m
+
+[90mstderr[2m | src/tests/unit/restrictions.test.ts[2m > [22m[2mBookService - Restriction Enforcement[2m > [22m[2mshould reject booking when date is CLOSED
+[22m[39mRESTRICTION CREATE FAILED: {
+  "name": "PrismaClientKnownRequestError",
+  "code": "P2022",
+  "clientVersion": "5.22.0",
+  "meta": {
+    "modelName": "Restriction",
+    "column": "stopSell"
+  }
+}
+
+ [31m❯[39m src/tests/unit/restrictions.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m | [22m[33m5 skipped[39m[2m)[22m[32m 83[2mms[22m[39m
+[31m     [31m×[31m should reject booking when date is CLOSED[39m[32m 82[2mms[22m[39m
+     [2m[90m↓[39m[22m should reject booking when check-in is CLOSED_TO_ARRIVAL
+     [2m[90m↓[39m[22m should reject booking when check-out is CLOSED_TO_DEPARTURE
+     [2m[90m↓[39m[22m should reject booking when stay is less than MIN_LOS
+     [2m[90m↓[39m[22m should reject booking when stay exceeds MAX_LOS
+     [2m[90m↓[39m[22m should allow booking when all restrictions are satisfied
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould reject booking when date is CLOSED
+[31m[1mPrismaClientKnownRequestError[22m: 
+Invalid `prisma.restriction.create()` invocation:
+
+
+The column `stopSell` does not exist in the current database.[39m
+[90m [2m❯[22m $n.handleRequestError node_modules/.prisma/client/runtime/library.js:[2m121:7315[22m[39m
+[90m [2m❯[22m $n.handleAndLogRequestError node_modules/.prisma/client/runtime/library.js:[2m121:6623[22m[39m
+[90m [2m❯[22m $n.request node_modules/.prisma/client/runtime/library.js:[2m121:6307[22m[39m
+[90m [2m❯[22m l node_modules/.prisma/client/runtime/library.js:[2m130:9633[22m[39m
+[36m [2m❯[22m src/tests/unit/restrictions.test.ts:[2m68:13[22m[39m
+    [90m 66| [39m        [90m// Set restriction: Date is closed[39m
+    [90m 67| [39m        [35mtry[39m {
+    [90m 68| [39m            [35mawait[39m prisma[33m.[39mrestriction[33m.[39m[34mcreate[39m({
+    [90m   | [39m            [31m^[39m
+    [90m 69| [39m                data[33m:[39m {
+    [90m 70| [39m                    propertyId[33m:[39m hotelId[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m5 skipped[39m[90m (6)[39m
+[2m   Start at [22m 11:55:47
+[2m   Duration [22m 1.63s[2m (transform 107ms, setup 106ms, import 964ms, tests 83ms, environment 318ms)[22m
+

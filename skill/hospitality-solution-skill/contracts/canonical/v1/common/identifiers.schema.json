@@ -1,0 +1,17 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/contracts/canonical/v1/common/identifiers.schema.json",
+  "title": "Identifiers",
+  "type": "object",
+  "properties": {
+    "requestId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "correlationId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "idempotencyKey": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "externalReference": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "reservationId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "pnr": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "guestId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "folioId": { "type": "string", "minLength": 1, "maxLength": 64 }
+  },
+  "additionalProperties": false
+}

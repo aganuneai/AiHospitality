@@ -1,0 +1,2 @@
+﻿# Saga â€” ARI Apply Pipeline
+RECEIVED â†’ DEDUPED â†’ VALIDATED â†’ NORMALIZED â†’ APPLIED â†’ ACKED

@@ -1,0 +1,20 @@
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 17.1s
+  Running TypeScript ...
+Failed to compile.
+
+./src/lib/ari/bulk-processor.ts:189:33
+Type error: Object literal may only specify known properties, but 'minLos' does not exist in type '(Without<RestrictionCreateInput, RestrictionUncheckedCreateInput> & RestrictionUncheckedCreateInput) | (Without<...> & RestrictionCreateInput)'. Did you mean to write 'minLOS'?
+
+[0m [90m 187 |[39m                                 roomTypeId[33m:[39m roomType[33m.[39mid[33m,[39m
+ [90m 188 |[39m                                 date[33m,[39m
+[31m[1m>[22m[39m[90m 189 |[39m                                 minLos[33m:[39m op[33m.[39mminLos [33m||[39m [36mnull[39m[33m,[39m
+ [90m     |[39m                                 [31m[1m^[22m[39m
+ [90m 190 |[39m                                 maxLos[33m:[39m op[33m.[39mmaxLos [33m||[39m [36mnull[39m[33m,[39m
+ [90m 191 |[39m                                 closedToArrival[33m:[39m op[33m.[39mclosedToArrival [33m||[39m [36mfalse[39m[33m,[39m
+ [90m 192 |[39m                                 closedToDeparture[33m:[39m op[33m.[39mclosedToDeparture [33m||[39m [36mfalse[39m[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

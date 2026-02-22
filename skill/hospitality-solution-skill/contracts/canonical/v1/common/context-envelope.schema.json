@@ -1,0 +1,30 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/contracts/canonical/v1/common/context-envelope.schema.json",
+  "title": "ContextEnvelope",
+  "type": "object",
+  "required": ["requestId", "domain"],
+  "properties": {
+    "requestId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "correlationId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "domain": { "type": "string", "enum": ["PROPERTY", "DISTRIBUTION", "ASYNC", "PAYMENT", "UPSELL"] },
+    "hotelId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "hubId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "channelCode": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "appKey": { "type": "string", "minLength": 8, "maxLength": 256 },
+    "locale": { "type": "string", "minLength": 2, "maxLength": 16 },
+    "timeZone": { "type": "string", "minLength": 3, "maxLength": 64 },
+    "environment": { "type": "string", "enum": ["DEV", "UAT", "PROD"] }
+  },
+  "allOf": [
+    { "oneOf": [
+        { "required": ["hotelId"], "not": { "required": ["hubId"] } },
+        { "required": ["hubId"], "not": { "required": ["hotelId"] } }
+    ]},
+    {
+      "if": { "properties": { "domain": { "const": "DISTRIBUTION" } } },
+      "then": { "required": ["channelCode", "appKey"] }
+    }
+  ],
+  "additionalProperties": false
+}

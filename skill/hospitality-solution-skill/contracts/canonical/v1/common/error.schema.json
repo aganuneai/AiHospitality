@@ -1,0 +1,35 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/contracts/canonical/v1/common/error.schema.json",
+  "title": "CanonicalError",
+  "type": "object",
+  "required": ["code", "message"],
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": [
+        "CONTEXT_INVALID",
+        "AUTH_EXPIRED",
+        "AUTH_INVALID",
+        "VALIDATION_ERROR",
+        "AVAILABILITY_CHANGED",
+        "RATE_CHANGED",
+        "POLICY_VIOLATION",
+        "MIN_LOS_VIOLATION",
+        "MAX_LOS_VIOLATION",
+        "CTA_VIOLATION",
+        "CTD_VIOLATION",
+        "STOP_SELL",
+        "NOT_ELIGIBLE",
+        "NOT_FOUND",
+        "CONFLICT",
+        "TIMEOUT",
+        "DEPENDENCY_DOWN",
+        "UNKNOWN"
+      ]
+    },
+    "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "details": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

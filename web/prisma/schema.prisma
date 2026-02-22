@@ -1,0 +1,792 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Common / System ---
+
+model IdempotencyLog {
+  key        String   @id
+  method     String
+  path       String
+  response   Json // Stores the cached response
+  statusCode Int
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Event Sourcing / Audit Trail
+model AuditLog {
+  id        String @id @default(uuid())
+  eventId   String @unique // Para deduplicação de eventos
+  eventType String // "BOOKING_CREATED", "BOOKING_CANCELLED", "ARI_APPLIED", etc
+
+  // Generic entity support
+  aggregateId   String // reservationId, folioId, inventoryId, etc
+  aggregateType String // "Reservation", "Folio", "Inventory", etc
+  entityType    String? // For MODE_CHANGE, etc
+  entityId      String?
+  action        String? // MODE_CHANGE, etc
+  changes       Json? // Change details
+
+  payload    Json // Evento completo (snapshot do estado)
+  metadata   Json? // Context headers, user info, etc
+  occurredAt DateTime @default(now())
+  timestamp  DateTime @default(now())
+  requestId  String? // x-request-id para tracing
+  userId     String? // Quem executou a ação
+  hotelId    String // x-hotel-id
+
+  @@index([aggregateId, aggregateType])
+  @@index([eventType])
+  @@index([hotelId])
+  @@index([occurredAt])
+  @@index([entityType, entityId])
+}
+
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  passwordHash String
+  name         String
+  role         String  @default("STAFF") // ADMIN, MANAGER, STAFF
+  active       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Context / Core ---
+
+model Property {
+  id          String  @id // hotelId
+  name        String
+  code        String  @unique
+  timeZone    String  @default("UTC")
+  description String?
+
+  roomTypes    RoomType[]
+  ratePlans    RatePlan[]
+  reservations Reservation[]
+  inventory    Inventory[]
+  packages     Package[]
+  upsellRules  UpsellRule[]
+  rates        Rate[]
+  rooms        Room[]
+  partners     Partner[]
+  calendarEvents CalendarEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Partners (Agencies, Companies, OTAs, Corporate Accounts) ---
+
+model Partner {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  type        String // AGENCY | COMPANY | OTA | CORPORATE
+  name        String
+  code        String
+  email       String?
+  phone       String?
+  country     String?
+  commission  Decimal? @db.Decimal(5, 2) // Commission percentage
+  contractRef String? // Contract number or document reference
+  active      Boolean  @default(true)
+  metadata    Json? // Extra fields (IATA for agencies, CNPJ for companies, etc.)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, code])
+  @@index([propertyId, type])
+  @@index([active])
+}
+
+model Hub {
+  id         String   @id // hubId
+  name       String
+  code       String   @unique
+  properties Json // List of associated properties if needed logic
+  createdAt  DateTime @default(now())
+}
+
+// --- Configuration ---
+
+model RoomType {
+  id          String   @id @default(uuid())
+  code        String
+  name        String
+  description String?
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  maxAdults   Int @default(2)
+  maxChildren Int @default(0)
+
+  reservations Reservation[]
+  inventory    Inventory[]
+  packages     Package[]
+  rates        Rate[]
+  rooms        Room[]
+
+  @@unique([propertyId, code])
+}
+
+model RatePlan {
+  id          String   @id @default(uuid())
+  code        String
+  name        String
+  description String?
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  reservations Reservation[]
+
+  // Revenue Management - Derived Rates
+  parentRatePlanId String?
+  parentRatePlan   RatePlan?  @relation("DerivedRatePlans", fields: [parentRatePlanId], references: [id])
+  derivedRatePlans RatePlan[] @relation("DerivedRatePlans")
+  derivedType      String?    // PERCENTAGE | FIXED_AMOUNT
+  derivedValue     Decimal?   @db.Decimal(10, 2)
+  roundingRule     String?    @default("NONE") // NONE, NEAREST_WHOLE, ENDING_99, ENDING_90, MULTIPLE_5, MULTIPLE_10
+
+  @@unique([propertyId, code])
+}
+
+model Room {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  name   String // "101", "Villa A"
+  status String @default("CLEAN") // CLEAN, DIRTY, INSPECTION, OOO (Out of Order)
+
+  tags String[] // "Sea View", "Near Elevator"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+  maintenance  RoomMaintenance[]
+
+  @@unique([propertyId, name])
+  @@index([roomTypeId])
+  @@index([status])
+}
+
+model RoomMaintenance {
+  id     String @id @default(uuid())
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  type   String // CLEANING, REPAIR, INSPECTION
+  status String // PENDING, IN_PROGRESS, COMPLETED
+
+  notes      String?
+  assignedTo String? // UserId
+
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roomId, status])
+}
+
+// --- Inventory & ARI ---
+
+model Inventory {
+  id         String   @id @default(uuid())
+  date       DateTime @db.Date // Store as date only
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  total     Int // Total physical
+  available Int // Calculated/Updated
+  booked    Int @default(0)
+
+  price        Decimal @default(100.00) @db.Decimal(10, 2)
+  restrictions Json? // MinLos, MaxLos, Closed, CTA, CTD
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, roomTypeId, date])
+}
+
+model Rate {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  ratePlanCode String
+  date         DateTime @db.Date
+
+  amount           Decimal @db.Decimal(10, 2)
+  currency         String  @default("USD")
+  isManualOverride Boolean @default(false) // RM lock: prevents automatic derived updates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, roomTypeId, date, ratePlanCode])
+  @@index([propertyId, date])
+}
+
+// ARI Restrictions
+model Restriction {
+  id           String   @id @default(uuid())
+  propertyId   String
+  roomTypeId   String
+  ratePlanCode String   @default("BASE")
+  date         DateTime @db.Date
+
+  // Arrival/Departure restrictions
+  closedToArrival   Boolean @default(false)
+  closedToDeparture Boolean @default(false)
+
+  // Length of Stay
+  minLOS Int? // Minimum Length of Stay
+  maxLOS Int? // Maximum Length of Stay
+
+  // Stop-Sell
+  stopSell Boolean @default(false) // Stop new bookings (existing ok)
+  closed   Boolean @default(false) // Full closure (no one can stay)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, roomTypeId, date, ratePlanCode])
+  @@index([propertyId, date])
+  @@index([roomTypeId, date])
+}
+
+model AriEvent {
+  eventId     String   @id @default(uuid())
+  occurredAt  DateTime
+  propertyId  String
+  channelCode String? // Which channel sent this
+  eventType   String // "AVAILABILITY", "RATE", "RESTRICTION"
+
+  // ARI specifics
+  roomTypeCode String
+  ratePlanCode String?
+  dateRange    Json // { from, to }
+
+  payload     Json // Complete event data
+  status      String    @default("PENDING") // PENDING, APPLIED, DEDUPED, ERROR
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([propertyId, status])
+  @@index([occurredAt])
+  @@index([eventType])
+}
+
+// --- Guest & Reservation ---
+
+model GuestProfile {
+  id          String  @id @default(uuid()) // guestId
+  fullName    String
+  email       String? @unique
+  phone       String?
+  document    Json? // { type, number, country }
+  preferences Json? // { language, smoking, etc }
+
+  reservations Reservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reservation {
+  id         String   @id // reservationId
+  pnr        String   @unique // Friendly ID
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  guestId String
+  guest   GuestProfile @relation(fields: [guestId], references: [id])
+
+  status String // PENDING, CONFIRMED, CANCELLED, etc.
+
+  // Distribution channel
+  channelId String?
+  channel   Channel? @relation(fields: [channelId], references: [id])
+
+  // Commercial / Distribution (Phase 4)
+  source      String? // PHONE, WHATSAPP, WALK_IN, WEBSITE
+  campaign    String?
+  agencyId    String? // Link to corporate/agency if needed
+  commission  Decimal? @db.Decimal(10, 2)
+  pricingType String   @default("GROSS") // NET or GROSS
+
+  // Grouping (Multi-UH)
+  groupId String? // ID to group multiple reservations (rooms) together
+
+  // Stay Details
+  checkIn  DateTime @db.Date
+  checkOut DateTime @db.Date
+  adults   Int
+  children Int      @default(0)
+
+  // Detailed Occupants (Phase 4)
+  guests ReservationGuest[]
+
+  // Detailed Occupants (Phase 4) - Handled above
+
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  // Physical Room Allocation (Phase 5)
+  roomId String?
+  room   Room?   @relation(fields: [roomId], references: [id])
+
+  ratePlanCode String // Stored as code for reference fidelity
+  ratePlanId   String?
+  ratePlan     RatePlan? @relation(fields: [ratePlanId], references: [id])
+
+  // Financials
+  total      Json // { amount, currency }
+  taxes      Json?
+  fees       Json?
+  dailyRates Json? // Array of daily breakdowns
+  policies   Json? // Cancellation, NoShow policies snapshot
+
+  // Quote tracking & validation
+  quoteId          String? // Reference to original quote
+  pricingSignature String? // SHA-256 hash for Quote-Book consistency
+
+  // Package (Monetization)
+  packageId String?
+  package   Package? @relation(fields: [packageId], references: [id])
+
+  // Upsell
+  upsellOffers UpsellOffer[]
+
+  // Payment & Guarantee
+  paymentAuthorizations PaymentAuthorization[]
+  paymentSplits         PaymentSplit[]
+  guaranteeType         String? // CREDIT_CARD, PRE_PAYMENT, COMPANY, NONE
+
+  // Metadata
+  tags          String[]
+  notes         String?
+  bookerDetails Json? // { name, email, phone } if different from guest
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folio Folio?
+
+  @@index([quoteId])
+  @@index([channelId])
+  @@index([groupId])
+}
+
+model ReservationGuest {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  name             String
+  type             String // ADULT, CHILD
+  age              Int? // Required for children
+  isRepresentative Boolean @default(false) // If this guest is the "responsible" for the room
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Fixed typo
+}
+
+// --- Finance ---
+
+model Folio {
+  id            String      @id @default(uuid()) // folioId
+  reservationId String      @unique
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  status String // OPEN, CLOSED, VOID
+
+  items  Json? // List of charges/payments: [{ code, description, amount, postedAt }]
+  totals Json // { base, taxes, fees, total }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Distribution (Fase 13 - Sprint 1) ---
+
+model Channel {
+  id   String @id @default(uuid())
+  code String @unique // BOOKING_COM, EXPEDIA, AIRBNB, etc.
+  name String
+  type String // Type of channel
+
+  // Distribution mode enforcement
+  distributionMode String? // SHOP_BOOK or ARI_PUSH
+  modeLockedAt     DateTime?
+  modeChangedBy    String? // userId who last changed mode
+
+  active Boolean @default(true)
+
+  // Channel credentials
+  appKey String? // x-app-key for authentication
+
+  // Provisioning
+  provisionedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parityChecks ParityCheck[]
+  ariUpdates   ARIUpdate[]
+  reservations Reservation[]
+
+  @@index([distributionMode])
+  @@index([active])
+}
+
+model ParityCheck {
+  id String @id @default(uuid())
+
+  // Channel comparison
+  channelAId   String
+  channelA     Channel @relation(fields: [channelAId], references: [id])
+  channelBId   String
+  channelBCode String // Denormalized for easier querying
+
+  // Property/Room context
+  propertyId String
+  roomTypeId String
+  ratePlanId String
+  date       DateTime @db.Date
+
+  // Rate comparison
+  rateA       Decimal @db.Decimal(10, 2)
+  rateB       Decimal @db.Decimal(10, 2)
+  rateDiff    Decimal @db.Decimal(10, 2)
+  rateDiffPct Decimal @db.Decimal(5, 2)
+
+  // Inventory comparison
+  inventoryA    Int
+  inventoryB    Int
+  inventoryDiff Int
+
+  // Status
+  status String // OK, WARNING, CRITICAL
+
+  checkedAt DateTime @default(now())
+
+  @@index([propertyId, date])
+  @@index([status])
+  @@index([channelAId, channelBCode])
+  @@index([checkedAt])
+}
+
+model ARIUpdate {
+  id String @id @default(uuid())
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id])
+
+  propertyId String
+  roomTypeId String
+  date       DateTime @db.Date
+
+  eventType String // RATE, AVAILABILITY, RESTRICTION
+
+  payload Json // Update data
+
+  status   String  @default("PENDING") // PENDING, PROCESSING, SUCCESS, FAILED
+  attempts Int     @default(0)
+  error    String?
+
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([channelId, status])
+  @@index([propertyId, date])
+  @@index([status, createdAt])
+}
+
+// --- Guest Journey (Fase 13 - Sprint 2) ---
+
+model GroupBlock {
+  id         String @id @default(uuid())
+  groupName  String
+  propertyId String
+  roomTypeId String
+
+  // Allocation
+  roomCount Int
+  pickedUp  Int @default(0)
+
+  // Dates
+  checkIn    DateTime @db.Date
+  checkOut   DateTime @db.Date
+  cutoffDate DateTime @db.Date
+
+  // Rates
+  ratePerNight Decimal @db.Decimal(10, 2)
+  currency     String  @default("USD")
+
+  // Contact
+  contactName  String?
+  contactEmail String?
+
+  // Status
+  released   Boolean   @default(false)
+  releasedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId, checkIn])
+  @@index([released, cutoffDate])
+}
+
+model Promotion {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+
+  // Discount
+  discountType  String // PERCENTAGE or FIXED_AMOUNT
+  discountValue Decimal @db.Decimal(10, 2)
+
+  // Validity
+  validFrom  DateTime
+  validUntil DateTime
+
+  // Limits
+  maxUses     Int?
+  currentUses Int  @default(0)
+  maxPerGuest Int?
+
+  // Eligibility
+  minStayNights Int?
+  minAmount     Decimal? @db.Decimal(10, 2)
+  roomTypes     String[] // Array of room type IDs
+  propertyId    String?
+
+  // Blackout dates
+  blackoutDates DateTime[]
+
+  // Combinability
+  combinable Boolean @default(false)
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([active, validFrom, validUntil])
+}
+
+model UpsellRule {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  // Critérios de Elegibilidade
+  roomTypeFrom  String? // Se null, aplica a qualquer quarto
+  minStayNights Int?
+
+  // Oferta
+  roomTypeTo String? // Upgrade de quarto
+  serviceId  String? // ou Serviço adicional (PackageItem)
+
+  // Pricing
+  priceType  String // FIXED_AMOUNT, PERCENTAGE_DIFF
+  priceValue Decimal @db.Decimal(10, 2)
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers UpsellOffer[]
+}
+
+model UpsellOffer {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  ruleId String
+  rule   UpsellRule @relation(fields: [ruleId], references: [id])
+
+  status String // PENDING, ACCEPTED, REJECTED, EXPIRED
+
+  offerPrice Decimal @db.Decimal(10, 2)
+  currency   String  @default("USD")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reservationId])
+  @@index([status])
+}
+
+// --- Monetization (Fase 13 - Sprint 4) ---
+
+model Package {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+
+  // Room type association
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  // Package Items (Structured Add-ons)
+  items PackageItem[]
+
+  // Pricing
+  basePrice   Decimal @db.Decimal(10, 2) // Preço base (ex: soma dos itens + quarto)
+  discountPct Decimal @db.Decimal(5, 2) // Desconto do pacote (ex: 15%)
+  finalPrice  Decimal @db.Decimal(10, 2) // Preço final ofertado
+  currency    String  @default("USD")
+
+  // Validity
+  validFrom     DateTime
+  validUntil    DateTime
+  minStayNights Int?     @default(1)
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+
+  @@index([code])
+  @@index([active, validFrom, validUntil])
+  @@index([propertyId])
+}
+
+model PackageItem {
+  id        String  @id @default(uuid())
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  name String // ex: "Café da Manhã", "Massagem"
+  type String // SERVICE, PRODUCT, EXPERIENCE
+
+  // Valor individual do item (para mostrar o "savings")
+  unitPrice Decimal @db.Decimal(10, 2)
+  quantity  Int     @default(1)
+
+  // Configuração
+  postingPattern String? // DAILY, ON_ARRIVAL, ON_DEPARTURE
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PaymentSplit {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  method String // PERCENTAGE, FIXED_AMOUNT, PER_IEM
+  payers Json // [{ name, email, amount, status }]
+
+  status String // PENDING, COMPLETED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorizations PaymentAuthorization[]
+}
+
+model PaymentAuthorization {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  // Split Context
+  splitId String?
+  split   PaymentSplit? @relation(fields: [splitId], references: [id])
+
+  // Amount
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("USD")
+
+  // Status
+  status String // PENDING, AUTHORIZED, CAPTURED, VOIDED, REFUNDED, FAILED
+
+  // Card (tokenized - PCI compliant)
+  cardToken String
+  cardLast4 String
+  cardBrand String
+
+  // Authorization
+  authorizationCode String?
+  authorizedAt      DateTime?
+  expiresAt         DateTime?
+
+  // Capture
+  capturedAmount Decimal?  @db.Decimal(10, 2)
+  capturedAt     DateTime?
+
+  // Void/Refund
+  voidedAt       DateTime?
+  refundedAmount Decimal?  @db.Decimal(10, 2)
+  refundedAt     DateTime?
+
+  // Processor
+  processorTransactionId String?
+  failureReason          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reservationId])
+  @@index([status, expiresAt])
+}
+
+model CalendarEvent {
+  id          String   @id @default(uuid())
+  propertyId  String? // Null for global/national events
+  property    Property? @relation(fields: [propertyId], references: [id])
+  
+  date        DateTime @db.Date
+  title       String
+  description String?
+  type        String   @default("EVENT") // HOLIDAY, LOCAL_EVENT, PROMOTION
+  color       String?  // Optional hex or tailwind color class
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([propertyId, date])
+  @@index([date])
+}

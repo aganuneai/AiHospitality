@@ -1,0 +1,610 @@
+{
+    "info": {
+        "name": "AiHospitality API v1",
+        "description": "Complete API collection for AiHospitality hospitality management platform.\n\n## Authentication\nAll endpoints require Bearer token authentication.\n\n## Base URL\n```\nhttps://api.aihospitality.com/api/v1\n```\n\n## Headers\n- `Authorization`: Bearer {token}\n- `Content-Type`: application/json\n- `x-hotelid` OR `x-hubid`: Property context (mutually exclusive)\n- `x-request-id`: Optional request tracking ID",
+        "version": "1.0.0",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "https://api.aihospitality.com/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "hotel_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Properties",
+            "description": "Property management endpoints",
+            "item": [
+                {
+                    "name": "List Properties",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hubid",
+                                "value": "{{hub_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/properties",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "properties"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Property Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/properties/:propertyId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "properties",
+                                ":propertyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "propertyId",
+                                    "value": "{{hotel_id}}"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Room Types",
+            "description": "Room type configuration",
+            "item": [
+                {
+                    "name": "List Room Types",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rooms",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rooms"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Rate Plans",
+            "description": "Rate plan management",
+            "item": [
+                {
+                    "name": "List Rate Plans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rates",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rates"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Quotes",
+            "description": "Booking quote endpoints",
+            "item": [
+                {
+                    "name": "Create Quote",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"checkIn\": \"2026-06-01\",\n  \"checkOut\": \"2026-06-05\",\n  \"roomTypeId\": \"deluxe-king\",\n  \"ratePlanCode\": \"BAR\",\n  \"adults\": 2,\n  \"children\": 0\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/quotes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "quotes"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Quote",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/quotes/:quoteId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "quotes",
+                                ":quoteId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "quoteId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Reservations",
+            "description": "Booking and reservation management",
+            "item": [
+                {
+                    "name": "Create Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Idempotency-Key",
+                                "value": "{{$guid}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quoteId\": \"quote-123\",\n  \"guest\": {\n    \"fullName\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1-555-0100\"\n  },\n  \"payment\": {\n    \"method\": \"credit_card\",\n    \"token\": \"tok_visa_4242\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/reservations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reservations"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/reservations?status=CONFIRMED&checkIn[gte]=2026-06-01",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reservations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "CONFIRMED"
+                                },
+                                {
+                                    "key": "checkIn[gte]",
+                                    "value": "2026-06-01"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Reservation",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/reservations/:reservationId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reservations",
+                                ":reservationId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "reservationId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Cancel Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Guest request\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/reservations/:reservationId/cancel",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reservations",
+                                ":reservationId",
+                                "cancel"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "reservationId",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "ARI (Availability, Rates, Inventory)",
+            "description": "ARI management for distribution",
+            "item": [
+                {
+                    "name": "Update Availability",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"roomTypeCode\": \"deluxe-king\",\n  \"updates\": [\n    {\n      \"date\": \"2026-06-01\",\n      \"available\": 10\n    },\n    {\n      \"date\": \"2026-06-02\",\n      \"available\": 8\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/ari/availability",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "ari",
+                                "availability"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Rates",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"roomTypeCode\": \"deluxe-king\",\n  \"ratePlanCode\": \"BAR\",\n  \"updates\": [\n    {\n      \"date\": \"2026-06-01\",\n      \"rate\": 199.99\n    },\n    {\n      \"date\": \"2026-06-02\",\n      \"rate\": 249.99\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/ari/rates",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "ari",
+                                "rates"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Restrictions",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"roomTypeCode\": \"deluxe-king\",\n  \"updates\": [\n    {\n      \"date\": \"2026-12-25\",\n      \"minLos\": 3,\n      \"closedToArrival\": true\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/ari/restrictions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "ari",
+                                "restrictions"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Distribution",
+            "description": "Channel management and parity monitoring",
+            "item": [
+                {
+                    "name": "List Channels",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/channels",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "channels"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Check Parity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"channels\": [\"BOOKING_COM\", \"EXPEDIA\"],\n  \"dateRange\": {\n    \"start\": \"2026-06-01\",\n    \"end\": \"2026-06-30\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/distribution/parity/check",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "distribution",
+                                "parity",
+                                "check"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Analytics",
+            "description": "Reporting and analytics",
+            "item": [
+                {
+                    "name": "Occupancy Report",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/analytics/occupancy?startDate=2026-06-01&endDate=2026-06-30",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "analytics",
+                                "occupancy"
+                            ],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2026-06-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2026-06-30"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Revenue Report",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "x-hotelid",
+                                "value": "{{hotel_id}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/analytics/revenue?startDate=2026-06-01&endDate=2026-06-30",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "analytics",
+                                "revenue"
+                            ],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2026-06-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2026-06-30"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,424 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mD:/Antigravity/AiHospitality/web[39m
+
+ [31m+ù[39m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould reject booking when date is CLOSED[32m 220[2mms[22m[39m
+[31m   ÔåÆ expected [Function] to throw error matching /fechad|closed|indispon+¡vel|reservas/i but got '\nInvalid `prisma.guestProfile.upsertÔÇª'[39m
+ [31m+ù[39m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould reject booking when check-in is CLOSED_TO_ARRIVAL[32m 14[2mms[22m[39m
+[31m   ÔåÆ expected [Function] to throw error matching /chegada|arrival|n+úo permitida/i but got '\nInvalid `prisma.guestProfile.upsertÔÇª'[39m
+ [31m+ù[39m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould reject booking when check-out is CLOSED_TO_DEPARTURE[32m 14[2mms[22m[39m
+[31m   ÔåÆ expected [Function] to throw error matching /sa+¡da|departure|n+úo permitida/i but got '\nInvalid `prisma.guestProfile.upsertÔÇª'[39m
+ [31m+ù[39m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould reject booking when stay is less than MIN_LOS[32m 11[2mms[22m[39m
+[31m   ÔåÆ 
+Invalid `prisma.restriction.create()` invocation:
+
+{
+  data: {
+    propertyId: "test-hotel-1770481328133",
+    roomTypeId: "e9bb69fc-fcd6-4589-b797-deeaa3f45089",
+    date: new Date("2026-02-08T03:00:00.000Z"),
+    minLOS: 3,
+    ~~~~~~
+?   id?: String,
+?   closedToArrival?: Boolean,
+?   closedToDeparture?: Boolean,
+?   minLos?: Int | Null,
+?   maxLos?: Int | Null,
+?   stopSell?: Boolean,
+?   closed?: Boolean,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `minLOS`. Did you mean `minLos`? Available options are marked with ?.[39m
+ [31m+ù[39m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould reject booking when stay exceeds MAX_LOS[32m 11[2mms[22m[39m
+[31m   ÔåÆ 
+Invalid `prisma.restriction.create()` invocation:
+
+{
+  data: {
+    propertyId: "test-hotel-1770481328133",
+    roomTypeId: "30aff9b2-4a1a-4c9c-b372-09085020790c",
+    date: new Date("2026-02-08T03:00:00.000Z"),
+    maxLOS: 3,
+    ~~~~~~
+?   id?: String,
+?   closedToArrival?: Boolean,
+?   closedToDeparture?: Boolean,
+?   minLos?: Int | Null,
+?   maxLos?: Int | Null,
+?   stopSell?: Boolean,
+?   closed?: Boolean,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `maxLOS`. Did you mean `maxLos`? Available options are marked with ?.[39m
+ [31m+ù[39m src/tests/unit/restrictions.test.ts[2m > [22mBookService - Restriction Enforcement[2m > [22mshould allow booking when all restrictions are satisfied[32m 10[2mms[22m[39m
+[31m   ÔåÆ 
+Invalid `prisma.restriction.create()` invocation:
+
+{
+  data: {
+    propertyId: "test-hotel-1770481328133",
+    roomTypeId: "c9e692b4-c744-466a-9bd1-dc635b01799b",
+    date: new Date("2026-02-08T03:00:00.000Z"),
+    minLOS: 2,
+    ~~~~~~
+    closed: false,
+    closedToArrival: false,
+?   id?: String,
+?   closedToDeparture?: Boolean,
+?   minLos?: Int | Null,
+?   maxLos?: Int | Null,
+?   stopSell?: Boolean,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `minLOS`. Did you mean `minLos`? Available options are marked with ?.[39m
+node.exe : 
+No C:\Program Files\nodejs\npx.ps1:29 caractere:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m[1m[41m Failed Tests 6 
+[49m[22m[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > 
+[22mBookService - Restriction Enforcement[2m > [22mshould reject booking 
+when date is CLOSED
+[31m[1mAssertionError[22m: expected [Function] to throw error matching 
+/fechad|closed|indispon+¡vel|reservas/i but got '\nInvalid 
+`prisma.guestProfile.upsertÔÇª'[39m
+
+[32m- Expected:[39m 
+/fechad|closed|indispon+¡vel|reservas/i
+
+[31m+ Received:[39m 
+"
+Invalid `prisma.guestProfile.upsert()` invocation:
+
+{
+  where: {
+    email: \"john@example.com\",
+?   id?: String,
+?   AND?: GuestProfileWhereInput | GuestProfileWhereInput[],
+?   OR?: GuestProfileWhereInput[],
+?   NOT?: GuestProfileWhereInput | GuestProfileWhereInput[],
+?   fullName?: StringFilter | String,
+?   phone?: StringNullableFilter | String | Null,
+?   document?: JsonNullableFilter,
+?   preferences?: JsonNullableFilter,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   reservations?: ReservationListRelationFilter
+  },
+  update: {
+    fullName: \"John Doe\",
+    phone: \"+1234567890\"
+  },
+  create: {
+    fullName: \"John Doe\",
+    email: \"john@example.com\",
+    phone: \"+1234567890\"
+  }
+}
+
+Argument `where` of type GuestProfileWhereUniqueInput needs at least one of 
+`id` arguments. Available options are marked with ?."
+
+[36m [2mÔØ»[22m src/tests/unit/restrictions.test.ts:[2m103:9[22m[39m
+    [90m101| [39m        }[33m;[39m
+    [90m102| [39m
+    [90m103| [39m        await expect(bookService.createBooking({ 
+propertyId: hotelId }ÔÇª
+    [90m   | [39m        [31m^[39m
+    [90m104| [39m            [33m.[39mrejects[33m.[39m[34mtoThrow[39m(
+[36m/fechad|closed|indispon+¡vel|reservas/i[39m)[33m;[39m
+    [90m105| [39m    })[33m;[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[1/6]ÔÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > 
+[22mBookService - Restriction Enforcement[2m > [22mshould reject booking 
+when check-in is CLOSED_TO_ARRIVAL
+[31m[1mAssertionError[22m: expected [Function] to throw error matching 
+/chegada|arrival|n+úo permitida/i but got '\nInvalid 
+`prisma.guestProfile.upsertÔÇª'[39m
+
+[32m- Expected:[39m 
+/chegada|arrival|n+úo permitida/i
+
+[31m+ Received:[39m 
+"
+Invalid `prisma.guestProfile.upsert()` invocation:
+
+{
+  where: {
+    email: \"jane@example.com\",
+?   id?: String,
+?   AND?: GuestProfileWhereInput | GuestProfileWhereInput[],
+?   OR?: GuestProfileWhereInput[],
+?   NOT?: GuestProfileWhereInput | GuestProfileWhereInput[],
+?   fullName?: StringFilter | String,
+?   phone?: StringNullableFilter | String | Null,
+?   document?: JsonNullableFilter,
+?   preferences?: JsonNullableFilter,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   reservations?: ReservationListRelationFilter
+  },
+  update: {
+    fullName: \"Jane Doe\",
+    phone: undefined
+  },
+  create: {
+    fullName: \"Jane Doe\",
+    email: \"jane@example.com\",
+    phone: undefined
+  }
+}
+
+Argument `where` of type GuestProfileWhereUniqueInput needs at least one of 
+`id` arguments. Available options are marked with ?."
+
+[36m [2mÔØ»[22m src/tests/unit/restrictions.test.ts:[2m140:9[22m[39m
+    [90m138| [39m        }[33m;[39m
+    [90m139| [39m
+    [90m140| [39m        await expect(bookService.createBooking({ 
+propertyId: hotelId }ÔÇª
+    [90m   | [39m        [31m^[39m
+    [90m141| [39m            
+[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/chegada|arrival|n+úo 
+permitida/i[39m)[33m;[39m
+    [90m142| [39m    })[33m;[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[2/6]ÔÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > 
+[22mBookService - Restriction Enforcement[2m > [22mshould reject booking 
+when check-out is CLOSED_TO_DEPARTURE
+[31m[1mAssertionError[22m: expected [Function] to throw error matching 
+/sa+¡da|departure|n+úo permitida/i but got '\nInvalid 
+`prisma.guestProfile.upsertÔÇª'[39m
+
+[32m- Expected:[39m 
+/sa+¡da|departure|n+úo permitida/i
+
+[31m+ Received:[39m 
+"
+Invalid `prisma.guestProfile.upsert()` invocation:
+
+{
+  where: {
+    email: \"bob@example.com\",
+?   id?: String,
+?   AND?: GuestProfileWhereInput | GuestProfileWhereInput[],
+?   OR?: GuestProfileWhereInput[],
+?   NOT?: GuestProfileWhereInput | GuestProfileWhereInput[],
+?   fullName?: StringFilter | String,
+?   phone?: StringNullableFilter | String | Null,
+?   document?: JsonNullableFilter,
+?   preferences?: JsonNullableFilter,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   reservations?: ReservationListRelationFilter
+  },
+  update: {
+    fullName: \"Bob Smith\",
+    phone: undefined
+  },
+  create: {
+    fullName: \"Bob Smith\",
+    email: \"bob@example.com\",
+    phone: undefined
+  }
+}
+
+Argument `where` of type GuestProfileWhereUniqueInput needs at least one of 
+`id` arguments. Available options are marked with ?."
+
+[36m [2mÔØ»[22m src/tests/unit/restrictions.test.ts:[2m177:9[22m[39m
+    [90m175| [39m        }[33m;[39m
+    [90m176| [39m
+    [90m177| [39m        await expect(bookService.createBooking({ 
+propertyId: hotelId }ÔÇª
+    [90m   | [39m        [31m^[39m
+    [90m178| [39m            
+[33m.[39mrejects[33m.[39m[34mtoThrow[39m([36m/sa+¡da|departure|n+úo 
+permitida/i[39m)[33m;[39m
+    [90m179| [39m    })[33m;[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[3/6]ÔÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > 
+[22mBookService - Restriction Enforcement[2m > [22mshould reject booking 
+when stay is less than MIN_LOS
+[31m[1mPrismaClientValidationError[22m: 
+Invalid `prisma.restriction.create()` invocation:
+
+{
+  data: {
+    propertyId: "test-hotel-1770481328133",
+    roomTypeId: "e9bb69fc-fcd6-4589-b797-deeaa3f45089",
+    date: new Date("2026-02-08T03:00:00.000Z"),
+    minLOS: 3,
+    ~~~~~~
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m   Start at [22m 13:22:06
+[2m   Duration [22m 1.94s[2m (transform 132ms, setup 96ms, import 1.08s, tests 283ms, environment 332ms)[22m
+
+?   id?: String,
+?   closedToArrival?: Boolean,
+?   closedToDeparture?: Boolean,
+?   minLos?: Int | Null,
+?   maxLos?: Int | Null,
+?   stopSell?: Boolean,
+?   closed?: Boolean,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `minLOS`. Did you mean `minLos`? Available options are marked 
+with ?.[39m
+[90m [2mÔØ»[22m wn 
+node_modules/.prisma/client/runtime/library.js:[2m29:1363[22m[39m
+[90m [2mÔØ»[22m $n.handleRequestError 
+node_modules/.prisma/client/runtime/library.js:[2m121:6958[22m[39m
+[90m [2mÔØ»[22m $n.handleAndLogRequestError 
+node_modules/.prisma/client/runtime/library.js:[2m121:6623[22m[39m
+[90m [2mÔØ»[22m $n.request 
+node_modules/.prisma/client/runtime/library.js:[2m121:6307[22m[39m
+[90m [2mÔØ»[22m l 
+node_modules/.prisma/client/runtime/library.js:[2m130:9633[22m[39m
+[36m [2mÔØ»[22m src/tests/unit/restrictions.test.ts:[2m186:9[22m[39m
+    [90m184| [39m
+    [90m185| [39m        [90m// Set restriction: Minimum 3 nights[39m
+    [90m186| [39m        [35mawait[39m 
+prisma[33m.[39mrestriction[33m.[39m[34mcreate[39m({
+    [90m   | [39m        [31m^[39m
+    [90m187| [39m            data[33m:[39m {
+    [90m188| [39m                propertyId[33m:[39m hotelId[33m,[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ clientVersion: '5.22.0' }[39m
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[4/6]ÔÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > 
+[22mBookService - Restriction Enforcement[2m > [22mshould reject booking 
+when stay exceeds MAX_LOS
+[31m[1mPrismaClientValidationError[22m: 
+Invalid `prisma.restriction.create()` invocation:
+
+{
+  data: {
+    propertyId: "test-hotel-1770481328133",
+    roomTypeId: "30aff9b2-4a1a-4c9c-b372-09085020790c",
+    date: new Date("2026-02-08T03:00:00.000Z"),
+    maxLOS: 3,
+    ~~~~~~
+?   id?: String,
+?   closedToArrival?: Boolean,
+?   closedToDeparture?: Boolean,
+?   minLos?: Int | Null,
+?   maxLos?: Int | Null,
+?   stopSell?: Boolean,
+?   closed?: Boolean,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `maxLOS`. Did you mean `maxLos`? Available options are marked 
+with ?.[39m
+[90m [2mÔØ»[22m wn 
+node_modules/.prisma/client/runtime/library.js:[2m29:1363[22m[39m
+[90m [2mÔØ»[22m $n.handleRequestError 
+node_modules/.prisma/client/runtime/library.js:[2m121:6958[22m[39m
+[90m [2mÔØ»[22m $n.handleAndLogRequestError 
+node_modules/.prisma/client/runtime/library.js:[2m121:6623[22m[39m
+[90m [2mÔØ»[22m $n.request 
+node_modules/.prisma/client/runtime/library.js:[2m121:6307[22m[39m
+[90m [2mÔØ»[22m l 
+node_modules/.prisma/client/runtime/library.js:[2m130:9633[22m[39m
+[36m [2mÔØ»[22m src/tests/unit/restrictions.test.ts:[2m223:9[22m[39m
+    [90m221| [39m
+    [90m222| [39m        [90m// Set restriction: Maximum 3 nights[39m
+    [90m223| [39m        [35mawait[39m 
+prisma[33m.[39mrestriction[33m.[39m[34mcreate[39m({
+    [90m   | [39m        [31m^[39m
+    [90m224| [39m            data[33m:[39m {
+    [90m225| [39m                propertyId[33m:[39m hotelId[33m,[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ clientVersion: '5.22.0' }[39m
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[5/6]ÔÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/tests/unit/restrictions.test.ts[2m > 
+[22mBookService - Restriction Enforcement[2m > [22mshould allow booking 
+when all restrictions are satisfied
+[31m[1mPrismaClientValidationError[22m: 
+Invalid `prisma.restriction.create()` invocation:
+
+{
+  data: {
+    propertyId: "test-hotel-1770481328133",
+    roomTypeId: "c9e692b4-c744-466a-9bd1-dc635b01799b",
+    date: new Date("2026-02-08T03:00:00.000Z"),
+    minLOS: 2,
+    ~~~~~~
+    closed: false,
+    closedToArrival: false,
+?   id?: String,
+?   closedToDeparture?: Boolean,
+?   minLos?: Int | Null,
+?   maxLos?: Int | Null,
+?   stopSell?: Boolean,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `minLOS`. Did you mean `minLos`? Available options are marked 
+with ?.[39m
+[90m [2mÔØ»[22m wn 
+node_modules/.prisma/client/runtime/library.js:[2m29:1363[22m[39m
+[90m [2mÔØ»[22m $n.handleRequestError 
+node_modules/.prisma/client/runtime/library.js:[2m121:6958[22m[39m
+[90m [2mÔØ»[22m $n.handleAndLogRequestError 
+node_modules/.prisma/client/runtime/library.js:[2m121:6623[22m[39m
+[90m [2mÔØ»[22m $n.request 
+node_modules/.prisma/client/runtime/library.js:[2m121:6307[22m[39m
+[90m [2mÔØ»[22m l 
+node_modules/.prisma/client/runtime/library.js:[2m130:9633[22m[39m
+[36m [2mÔØ»[22m src/tests/unit/restrictions.test.ts:[2m260:9[22m[39m
+    [90m258| [39m
+    [90m259| [39m        [90m// Set restriction: Min 2 nights (satisfied), 
+not closed[39m
+    [90m260| [39m        [35mawait[39m 
+prisma[33m.[39mrestriction[33m.[39m[34mcreate[39m({
+    [90m   | [39m        [31m^[39m
+    [90m261| [39m            data[33m:[39m {
+    [90m262| [39m                propertyId[33m:[39m hotelId[33m,[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ clientVersion: '5.22.0' }[39m
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[6/6]ÔÄ»[22m[39m
+

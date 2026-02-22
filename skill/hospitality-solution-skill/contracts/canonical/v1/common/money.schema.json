@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/contracts/canonical/v1/common/money.schema.json",
+  "title": "Money",
+  "type": "object",
+  "required": ["amount", "currency"],
+  "properties": {
+    "amount": { "type": "number" },
+    "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+  },
+  "additionalProperties": false
+}

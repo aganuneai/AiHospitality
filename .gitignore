@@ -1,29 +1,34 @@
-
-
-# Environment & Secrets (AIOS)
-.env
-.env.local
-.env.*.local
-*.key
-*.pem
-
-# Dependencies (AIOS)
+# Root ignores
 node_modules/
-node_modules
-
-# Build & Logs (AIOS)
+.env*
+*.log
 dist/
 build/
-*.log
-logs/
-
-# IDE & OS (AIOS)
 .DS_Store
 Thumbs.db
 .idea/
-*.swp
+.vscode/
+.antigravity/logs/
+.claude/
+.codex/
 
-# AIOS Local (AIOS)
+# Web subfolder ignores
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+web/src/generated/prisma
+web/next-env.d.ts
+web/*.tsbuildinfo
+
+# AIOS Local
 .aios-core/local/
-.claude/settings.local.json
+.aios-core/logs/
 .aios/install-log.txt
+.claude/settings.local.json
+
+# Workspace Specific
+DOC/
+*.webp
+*.png
+!DOC/*.md
