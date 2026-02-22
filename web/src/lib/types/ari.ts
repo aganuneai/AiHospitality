@@ -97,6 +97,7 @@ export interface AriCalendarResponse {
 }
 
 export interface AriGridRateLine {
+    ratePlanId: string;
     ratePlanCode: string;
     ratePlanName: string;
     parentRatePlanId: string | null;

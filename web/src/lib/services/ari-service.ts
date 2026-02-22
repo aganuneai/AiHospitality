@@ -165,6 +165,7 @@ export class AriService {
                 });
 
                 return {
+                    ratePlanId: rp?.id || 'BASE_ID',
                     ratePlanCode: rpc,
                     ratePlanName,
                     parentRatePlanId: rp?.parentRatePlanId || null,
@@ -595,6 +596,142 @@ export class AriService {
             default:
                 return value;
         }
+    }
+
+    /**
+     * Calculates pricing for multiple occupancies (Adults and Children)
+     * based on a base double rate.
+     */
+    /**
+     * Calculates pricing for multiple occupancies (Adults and Children)
+     * based on a base double rate.
+     */
+    async calculateOccupancyRates(baseRate: number, ratePlan: any) {
+        const calculateRate = (base: number, value: number, type: string) => {
+            if (type === 'PERCENTAGE') {
+                return base * (1 + (Number(value) / 100));
+            }
+            return base + Number(value);
+        };
+
+        const applyRounding = (val: number) => this.applyRounding(val, ratePlan.roundingRule || 'NONE');
+
+        // Check if we should inherit logic from parent
+        let effectiveRatePlan = { ...ratePlan };
+        let parentRatePlan: any = null;
+
+        if (ratePlan.parentRatePlanId) {
+            parentRatePlan = await prisma.ratePlan.findUnique({
+                where: { id: ratePlan.parentRatePlanId }
+            });
+        }
+
+        const deriveFromParent = (parentVal: number) => {
+            // New rule: If parent value is explicitly 0 (case for children not paying), it stays 0
+            if (parentVal === 0) return 0;
+
+            if (!parentRatePlan || !ratePlan.derivedType) return parentVal;
+
+            let val = parentVal;
+            if (ratePlan.derivedType === 'PERCENTAGE') {
+                val = parentVal * (1 + (Number(ratePlan.derivedValue) / 100));
+            } else if (ratePlan.derivedType === 'FIXED_AMOUNT') {
+                val = parentVal + Number(ratePlan.derivedValue);
+            }
+            return this.applyRounding(val, ratePlan.roundingRule || 'NONE');
+        };
+
+        // Adult Calculation
+        // 2 Adults is the base (Double)
+        const rates: Record<string, number> = {
+            '1': 0, '2': baseRate, '3': 0, '4': 0
+        };
+
+        const adultFields = [
+            { key: '1', field: 'singleValue', typeField: 'singleType' },
+            { key: '3', field: 'tripleValue', typeField: 'tripleType' },
+            { key: '4', field: 'quadValue', typeField: 'quadType' }
+        ];
+
+        for (const f of adultFields) {
+            const childVal = Number(ratePlan[f.field] || 0);
+            if (childVal !== 0) {
+                // Customized in child
+                rates[f.key] = applyRounding(calculateRate(baseRate, childVal, ratePlan[f.typeField] || 'PERCENTAGE'));
+            } else if (parentRatePlan) {
+                // Inherit from parent: calculate parent's rate for that occupancy and then apply child's global modifier
+                const parentBase = baseRate; // Start with child base (already derived)
+                const parentOffsetVal = Number(parentRatePlan[f.field] || 0);
+                const parentOffsetType = parentRatePlan[f.typeField] || 'PERCENTAGE';
+
+                // Effective Rate = (Child Base) with (Parent Offset) applied
+                rates[f.key] = applyRounding(calculateRate(baseRate, parentOffsetVal, parentOffsetType));
+            } else {
+                // No parent, no child value
+                rates[f.key] = baseRate;
+            }
+
+            // Rule: Adults cannot be 0. Fallback to base rate if error or zero.
+            if (rates[f.key] <= 0) {
+                rates[f.key] = baseRate;
+            }
+        }
+
+        // Extra Adults (from 5th onwards)
+        const extraVal = Number(ratePlan.extraAdultValue || 0);
+        const extraType = ratePlan.extraAdultType || 'FIXED_AMOUNT';
+
+        for (let i = 5; i <= 10; i++) {
+            if (extraVal !== 0) {
+                rates[i.toString()] = applyRounding(calculateRate(rates['4'], extraVal * (i - 4), extraType));
+            } else if (parentRatePlan) {
+                const parentExtraVal = Number(parentRatePlan.extraAdultValue || 0);
+                const parentExtraType = parentRatePlan.extraAdultType || 'FIXED_AMOUNT';
+                rates[i.toString()] = applyRounding(calculateRate(rates['4'], parentExtraVal * (i - 4), parentExtraType));
+            } else {
+                rates[i.toString()] = rates['4'];
+            }
+        }
+
+        // Child Calculation (Fixed Prices, Sequential activation)
+        const children = [];
+        const tiers = [
+            { active: 'childTier1Active', age: 'childTier1MaxAge', price: 'childTier1Price', prevAge: null },
+            { active: 'childTier2Active', age: 'childTier2MaxAge', price: 'childTier2Price', prevAge: 'childTier1MaxAge' },
+            { active: 'childTier3Active', age: 'childTier3MaxAge', price: 'childTier3Price', prevAge: 'childTier2MaxAge' }
+        ];
+
+        for (let i = 0; i < tiers.length; i++) {
+            const t = tiers[i];
+            const isActive = ratePlan[t.active] || (parentRatePlan && parentRatePlan[t.active]);
+            if (!isActive) continue;
+
+            const maxAge = ratePlan[t.age] || (parentRatePlan ? parentRatePlan[t.age] : 0);
+            const childPrice = Number(ratePlan[t.price] || 0);
+
+            let finalPrice = childPrice;
+            if (childPrice === 0 && parentRatePlan) {
+                // Inherit and Derive child price
+                finalPrice = deriveFromParent(Number(parentRatePlan[t.price] || 0));
+            }
+
+            const startAge = t.prevAge ? (Number(ratePlan[t.prevAge] || (parentRatePlan ? parentRatePlan[t.prevAge] : 0)) + 1) : 0;
+            const label = i === 0 ? `Até ${maxAge} anos` : `${startAge} a ${maxAge} anos`;
+
+            children.push({
+                label,
+                price: finalPrice,
+                tier: i + 1
+            });
+        }
+
+        return {
+            adults: rates,
+            children,
+            baseRate,
+            ratePlanName: ratePlan.name,
+            ratePlanCode: ratePlan.code
+        };
     }
 
 

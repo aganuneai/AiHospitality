@@ -7,7 +7,7 @@ import {
     NeoTableRow, NeoTableHead, NeoTableCell,
     NeoTableLoading, NeoTableEmpty
 } from "@/components/neo/neo-table"
-import { NeoSheet, NeoSheetContent, NeoSheetHeader, NeoSheetTitle, NeoSheetDescription, NeoSheetTrigger } from "@/components/neo/neo-sheet"
+import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogTrigger, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog"
 import { NeoInput } from "@/components/neo/neo-input"
 import { DoorClosed, PlusCircle, Pencil, Download, Trash2, Check, X, Tag } from "lucide-react"
 
@@ -27,7 +27,7 @@ export default function RoomsPage() {
     const [rooms, setRooms] = useState<Room[]>([])
     const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
     const [loading, setLoading] = useState(true)
-    const [sheetOpen, setSheetOpen] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
     const [form, setForm] = useState(EMPTY_FORM)
     const [editing, setEditing] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -52,13 +52,13 @@ export default function RoomsPage() {
     const openCreate = () => {
         setEditing(null)
         setForm({ ...EMPTY_FORM, roomTypeId: roomTypes[0]?.id ?? "" })
-        setError(null); setSheetOpen(true)
+        setError(null); setDialogOpen(true)
     }
 
     const openEdit = (r: Room) => {
         setEditing(r.id)
         setForm({ name: r.name, roomTypeId: r.roomType.id, status: r.status, tags: r.tags.join(", ") })
-        setError(null); setSheetOpen(true)
+        setError(null); setDialogOpen(true)
     }
 
     const handleSave = async () => {
@@ -69,7 +69,7 @@ export default function RoomsPage() {
             const url = editing ? `/api/v1/admin/rooms/${editing}` : "/api/v1/admin/rooms"
             const res = await fetch_(url, { method, headers: { "Content-Type": "application/json", "x-hotel-id": "HOTEL_001" }, body: JSON.stringify(body) })
             if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-            setSheetOpen(false); load()
+            setDialogOpen(false); load()
         } catch (e: any) { setError(e.message) }
         finally { setSaving(false) }
     }
@@ -93,55 +93,57 @@ export default function RoomsPage() {
                     <button className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 bg-secondary/30 px-4 py-2 text-sm font-semibold text-foreground transition-all hover:bg-secondary">
                         <Download className="mr-2 h-4 w-4 text-muted-foreground" />Exportar
                     </button>
-                    <NeoSheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                        <NeoSheetTrigger asChild>
+                    <NeoDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <NeoDialogTrigger asChild>
                             <button onClick={openCreate} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:-translate-y-0.5">
                                 <PlusCircle className="mr-2 h-4 w-4" />Novo Quarto
                             </button>
-                        </NeoSheetTrigger>
-                        <NeoSheetContent className="w-[420px] sm:w-[560px]">
-                            <NeoSheetHeader>
-                                <NeoSheetTitle>{editing ? "Editar Quarto" : "Novo Quarto"}</NeoSheetTitle>
-                                <NeoSheetDescription>Cadastre ou edite uma unidade de hospedagem.</NeoSheetDescription>
-                            </NeoSheetHeader>
-                            <div className="py-6 space-y-4">
-                                {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Número / Nome *</label>
-                                        <NeoInput value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: 101, Villa A" />
+                        </NeoDialogTrigger>
+                        <NeoDialogContent className="sm:max-w-[500px]">
+                            <NeoDialogHeader>
+                                <NeoDialogTitle>{editing ? "Editar Quarto" : "Novo Quarto"}</NeoDialogTitle>
+                                <NeoDialogDescription>Cadastre ou edite uma unidade de hospedagem.</NeoDialogDescription>
+                            </NeoDialogHeader>
+                            <NeoDialogBody>
+                                <div className="space-y-4">
+                                    {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Número / Nome *</label>
+                                            <NeoInput value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: 101, Villa A" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de Quarto *</label>
+                                            <select value={form.roomTypeId} onChange={e => setForm(f => ({ ...f, roomTypeId: e.target.value }))}
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                                <option value="">Selecione...</option>
+                                                {roomTypes.map(rt => <option key={rt.id} value={rt.id}>{rt.name} ({rt.code})</option>)}
+                                            </select>
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de Quarto *</label>
-                                        <select value={form.roomTypeId} onChange={e => setForm(f => ({ ...f, roomTypeId: e.target.value }))}
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</label>
+                                        <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
                                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                            <option value="">Selecione...</option>
-                                            {roomTypes.map(rt => <option key={rt.id} value={rt.id}>{rt.name} ({rt.code})</option>)}
+                                            {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                                         </select>
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags (separadas por vírgula)</label>
+                                        <NeoInput value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="ex: Vista Mar, Andar Alto, Banheira" />
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</label>
-                                    <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                        {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags (separadas por vírgula)</label>
-                                    <NeoInput value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="ex: Vista Mar, Andar Alto, Banheira" />
-                                </div>
-                                <div className="pt-4 flex gap-3">
-                                    <button onClick={handleSave} disabled={saving} className="inline-flex flex-1 h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
-                                        <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar"}
-                                    </button>
-                                    <button onClick={() => setSheetOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-4 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
-                                        <X className="mr-2 h-4 w-4" />Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        </NeoSheetContent>
-                    </NeoSheet>
+                            </NeoDialogBody>
+                            <NeoDialogActions>
+                                <button onClick={() => setDialogOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-6 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
+                                    <X className="mr-2 h-4 w-4" />Cancelar
+                                </button>
+                                <button onClick={handleSave} disabled={saving} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
+                                    <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar"}
+                                </button>
+                            </NeoDialogActions>
+                        </NeoDialogContent>
+                    </NeoDialog>
                 </div>
             </div>
 

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { GuestEditSheet } from './components/GuestEditSheet';
+import { GuestEditDialog } from './components/GuestEditDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -193,7 +193,7 @@ export default function GuestsPage() {
                 </CardContent>
             </Card>
 
-            <GuestEditSheet
+            <GuestEditDialog
                 guestId={selectedGuestId}
                 isOpen={isEditOpen}
                 onClose={() => {

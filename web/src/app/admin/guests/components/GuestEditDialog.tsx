@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X, Check } from 'lucide-react';
 
 const guestSchema = z.object({
     fullName: z.string().min(3, "Nome muito curto"),
@@ -21,7 +21,7 @@ const guestSchema = z.object({
 
 type GuestFormValues = z.infer<typeof guestSchema>;
 
-interface GuestEditSheetProps {
+interface GuestEditDialogProps {
     guestId: string | null;
     isOpen: boolean;
     onClose: () => void;
@@ -29,7 +29,7 @@ interface GuestEditSheetProps {
     mode: 'create' | 'edit';
 }
 
-export function GuestEditSheet({ guestId, isOpen, onClose, onSuccess, mode }: GuestEditSheetProps) {
+export function GuestEditDialog({ guestId, isOpen, onClose, onSuccess, mode }: GuestEditDialogProps) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -126,61 +126,65 @@ export function GuestEditSheet({ guestId, isOpen, onClose, onSuccess, mode }: Gu
     }
 
     return (
-        <Sheet open={isOpen} onOpenChange={(v) => !v && onClose()}>
-            <SheetContent className="sm:max-w-md">
-                <SheetHeader>
-                    <SheetTitle>{mode === 'create' ? 'Novo Hóspede' : 'Editar Perfil do Hóspede'}</SheetTitle>
-                    <SheetDescription>
+        <NeoDialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
+            <NeoDialogContent className="sm:max-w-md">
+                <NeoDialogHeader>
+                    <NeoDialogTitle>{mode === 'create' ? 'Novo Hóspede' : 'Editar Perfil do Hóspede'}</NeoDialogTitle>
+                    <NeoDialogDescription>
                         {mode === 'create'
                             ? 'Complete as informações básicas para cadastrar um novo cliente.'
                             : 'Atualize as informações de contato e documentos do cliente.'}
-                    </SheetDescription>
-                </SheetHeader>
+                    </NeoDialogDescription>
+                </NeoDialogHeader>
 
-                {loading ? (
-                    <div className="flex items-center justify-center p-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                ) : (
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="fullName">Nome Completo</Label>
-                            <Input id="fullName" {...register('fullName')} />
-                            {errors.fullName && <p className="text-xs text-destructive">{errors.fullName.message}</p>}
+                <NeoDialogBody>
+                    {loading ? (
+                        <div className="flex items-center justify-center p-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="email">E-mail</Label>
-                            <Input id="email" type="email" {...register('email')} />
-                            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Telefone</Label>
-                            <Input id="phone" {...register('phone')} />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+                    ) : (
+                        <form id="guest-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="documentType">Tipo Doc.</Label>
-                                <Input id="documentType" {...register('documentType')} />
+                                <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome Completo *</Label>
+                                <Input id="fullName" {...register('fullName')} className="bg-secondary/30" />
+                                {errors.fullName && <p className="text-xs text-destructive">{errors.fullName.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="documentNumber">Número</Label>
-                                <Input id="documentNumber" {...register('documentNumber')} />
-                            </div>
-                        </div>
 
-                        <SheetFooter className="pt-4">
-                            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-                            <Button type="submit" disabled={saving}>
-                                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {mode === 'create' ? 'Cadastrar Hóspede' : 'Salvar Alterações'}
-                            </Button>
-                        </SheetFooter>
-                    </form>
-                )}
-            </SheetContent>
-        </Sheet>
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</Label>
+                                <Input id="email" type="email" {...register('email')} className="bg-secondary/30" />
+                                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefone</Label>
+                                <Input id="phone" {...register('phone')} className="bg-secondary/30" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="documentType" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo Doc.</Label>
+                                    <Input id="documentType" {...register('documentType')} className="bg-secondary/30" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="documentNumber" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Número</Label>
+                                    <Input id="documentNumber" {...register('documentNumber')} className="bg-secondary/30" />
+                                </div>
+                            </div>
+                        </form>
+                    )}
+                </NeoDialogBody>
+
+                <NeoDialogActions>
+                    <Button type="button" variant="ghost" onClick={onClose} className="rounded-lg">
+                        <X className="mr-2 h-4 w-4" />Cancelar
+                    </Button>
+                    <Button type="submit" form="guest-form" disabled={saving || loading} className="rounded-lg px-8">
+                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                        {mode === 'create' ? 'Cadastrar Hóspede' : 'Salvar Alterações'}
+                    </Button>
+                </NeoDialogActions>
+            </NeoDialogContent>
+        </NeoDialog>
     );
 }

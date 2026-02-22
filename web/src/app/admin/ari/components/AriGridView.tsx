@@ -335,6 +335,7 @@ export function AriGridView() {
                                                             <AriGridRateCell
                                                                 date={day.date}
                                                                 roomTypeId={row.roomTypeId}
+                                                                ratePlanId={rateLine.ratePlanId}
                                                                 ratePlanCode={rateLine.ratePlanCode}
                                                                 initialRate={day.rate}
                                                                 isDerived={rateLine.parentRatePlanId !== null}

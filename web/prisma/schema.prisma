@@ -155,13 +155,38 @@ model RatePlan {
 
   reservations Reservation[]
 
-  // Revenue Management - Derived Rates
+  // Revenue Management - Derived Rates (Parent/Child)
   parentRatePlanId String?
   parentRatePlan   RatePlan?  @relation("DerivedRatePlans", fields: [parentRatePlanId], references: [id])
   derivedRatePlans RatePlan[] @relation("DerivedRatePlans")
   derivedType      String?    // PERCENTAGE | FIXED_AMOUNT
   derivedValue     Decimal?   @db.Decimal(10, 2)
-  roundingRule     String?    @default("NONE") // NONE, NEAREST_WHOLE, ENDING_99, ENDING_90, MULTIPLE_5, MULTIPLE_10
+  roundingRule     String?    @default("NONE") // NONE, NEAREST_WHOLE, ENDING_90, etc.
+
+  // Occupancy-Based Pricing (Derived from Double)
+  singleType  String?  @default("PERCENTAGE") // PERCENTAGE | FIXED_AMOUNT
+  singleValue Decimal? @default(0) @db.Decimal(10, 2)
+  tripleType  String?  @default("PERCENTAGE")
+  tripleValue Decimal? @default(0) @db.Decimal(10, 2)
+  quadType    String?  @default("PERCENTAGE")
+  quadValue   Decimal? @default(0) @db.Decimal(10, 2)
+
+  // Extra persons (from 5th onwards)
+  extraAdultType  String?  @default("FIXED_AMOUNT")
+  extraAdultValue Decimal? @default(0) @db.Decimal(10, 2)
+
+  // Child Tiers (Fixed prices, sequential activation)
+  childTier1Active Boolean  @default(false)
+  childTier1MaxAge Int?     @default(0)
+  childTier1Price  Decimal? @default(0) @db.Decimal(10, 2)
+
+  childTier2Active Boolean  @default(false)
+  childTier2MaxAge Int?     @default(5)
+  childTier2Price  Decimal? @default(0) @db.Decimal(10, 2)
+
+  childTier3Active Boolean  @default(false)
+  childTier3MaxAge Int?     @default(12)
+  childTier3Price  Decimal? @default(0) @db.Decimal(10, 2)
 
   @@unique([propertyId, code])
 }

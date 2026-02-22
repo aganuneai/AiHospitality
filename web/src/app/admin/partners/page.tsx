@@ -7,7 +7,7 @@ import {
     NeoTableRow, NeoTableHead, NeoTableCell,
     NeoTableLoading, NeoTableEmpty
 } from "@/components/neo/neo-table"
-import { NeoSheet, NeoSheetContent, NeoSheetHeader, NeoSheetTitle, NeoSheetDescription, NeoSheetTrigger } from "@/components/neo/neo-sheet"
+import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogTrigger, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog"
 import { NeoInput } from "@/components/neo/neo-input"
 import { Handshake, PlusCircle, Pencil, Download, Trash2, Check, X, Building2, Globe, Plane, Briefcase } from "lucide-react"
 
@@ -39,7 +39,7 @@ export default function PartnersPage() {
     const [partners, setPartners] = useState<Partner[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"ALL" | PartnerType>("ALL")
-    const [sheetOpen, setSheetOpen] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
     const [form, setForm] = useState({ ...EMPTY_FORM })
     const [editing, setEditing] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -56,11 +56,11 @@ export default function PartnersPage() {
 
     useEffect(() => { load() }, [])
 
-    const openCreate = () => { setEditing(null); setForm({ ...EMPTY_FORM }); setError(null); setSheetOpen(true) }
+    const openCreate = () => { setEditing(null); setForm({ ...EMPTY_FORM }); setError(null); setDialogOpen(true) }
     const openEdit = (p: Partner) => {
         setEditing(p.id)
         setForm({ type: p.type, name: p.name, code: p.code, email: p.email ?? "", phone: p.phone ?? "", country: p.country ?? "", commission: p.commission?.toString() ?? "", contractRef: p.contractRef ?? "" })
-        setError(null); setSheetOpen(true)
+        setError(null); setDialogOpen(true)
     }
 
     const handleSave = async () => {
@@ -71,7 +71,7 @@ export default function PartnersPage() {
             const url = editing ? `/api/v1/admin/partners/${editing}` : "/api/v1/admin/partners"
             const res = await fetch(url, { method, headers: { "Content-Type": "application/json", ...hdr }, body: JSON.stringify(body) })
             if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-            setSheetOpen(false); load()
+            setDialogOpen(false); load()
         } catch (e: any) { setError(e.message) }
         finally { setSaving(false) }
     }
@@ -96,79 +96,81 @@ export default function PartnersPage() {
                     <button className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 bg-secondary/30 px-4 py-2 text-sm font-semibold text-foreground transition-all hover:bg-secondary">
                         <Download className="mr-2 h-4 w-4 text-muted-foreground" />Exportar
                     </button>
-                    <NeoSheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                        <NeoSheetTrigger asChild>
+                    <NeoDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <NeoDialogTrigger asChild>
                             <button onClick={openCreate} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:-translate-y-0.5">
                                 <PlusCircle className="mr-2 h-4 w-4" />Novo Parceiro
                             </button>
-                        </NeoSheetTrigger>
-                        <NeoSheetContent className="w-[420px] sm:w-[580px]">
-                            <NeoSheetHeader>
-                                <NeoSheetTitle>{editing ? "Editar Parceiro" : "Novo Parceiro"}</NeoSheetTitle>
-                                <NeoSheetDescription>Cadastre uma agência, empresa, OTA ou conta corporativa.</NeoSheetDescription>
-                            </NeoSheetHeader>
-                            <div className="py-6 space-y-4">
-                                {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
+                        </NeoDialogTrigger>
+                        <NeoDialogContent className="sm:max-w-[600px]">
+                            <NeoDialogHeader>
+                                <NeoDialogTitle>{editing ? "Editar Parceiro" : "Novo Parceiro"}</NeoDialogTitle>
+                                <NeoDialogDescription>Cadastre uma agência, empresa, OTA ou conta corporativa.</NeoDialogDescription>
+                            </NeoDialogHeader>
+                            <NeoDialogBody>
+                                <div className="space-y-4">
+                                    {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
 
-                                {/* Tipo */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo *</label>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {PARTNER_TYPES.filter(t => t.value !== "ALL").map(t => (
-                                            <button key={t.value} type="button"
-                                                onClick={() => setForm(f => ({ ...f, type: t.value as PartnerType }))}
-                                                className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs font-semibold transition-all ${form.type === t.value ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-secondary/30 text-muted-foreground hover:bg-secondary"}`}>
-                                                <t.icon className="h-4 w-4" />{t.label}
-                                            </button>
-                                        ))}
+                                    {/* Tipo */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo *</label>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {PARTNER_TYPES.filter(t => t.value !== "ALL").map(t => (
+                                                <button key={t.value} type="button"
+                                                    onClick={() => setForm(f => ({ ...f, type: t.value as PartnerType }))}
+                                                    className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs font-semibold transition-all ${form.type === t.value ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-secondary/30 text-muted-foreground hover:bg-secondary"}`}>
+                                                    <t.icon className="h-4 w-4" />{t.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome *</label>
-                                        <NeoInput value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nome do parceiro" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome *</label>
+                                            <NeoInput value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nome do parceiro" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
+                                            <NeoInput value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ex: EXPEDIA, IBM_BR" disabled={!!editing} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</label>
+                                            <NeoInput type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="contato@empresa.com" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefone</label>
+                                            <NeoInput value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+55 11 9..." />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País</label>
+                                            <NeoInput value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} placeholder="BR, US, PT..." />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Comissão (%)</label>
+                                            <NeoInput type="number" step="0.01" min="0" max="100" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} placeholder="ex: 15.00" />
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
-                                        <NeoInput value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ex: EXPEDIA, IBM_BR" disabled={!!editing} />
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Referência de Contrato</label>
+                                        <NeoInput value={form.contractRef} onChange={e => setForm(f => ({ ...f, contractRef: e.target.value }))} placeholder="Número ou código do contrato" />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</label>
-                                        <NeoInput type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="contato@empresa.com" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefone</label>
-                                        <NeoInput value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+55 11 9..." />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País</label>
-                                        <NeoInput value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} placeholder="BR, US, PT..." />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Comissão (%)</label>
-                                        <NeoInput type="number" step="0.01" min="0" max="100" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} placeholder="ex: 15.00" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Referência de Contrato</label>
-                                    <NeoInput value={form.contractRef} onChange={e => setForm(f => ({ ...f, contractRef: e.target.value }))} placeholder="Número ou código do contrato" />
-                                </div>
-                                <div className="pt-4 flex gap-3">
-                                    <button onClick={handleSave} disabled={saving} className="inline-flex flex-1 h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
-                                        <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar Parceiro"}
-                                    </button>
-                                    <button onClick={() => setSheetOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-4 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
-                                        <X className="mr-2 h-4 w-4" />Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        </NeoSheetContent>
-                    </NeoSheet>
+                            </NeoDialogBody>
+                            <NeoDialogActions>
+                                <button onClick={() => setDialogOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-6 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
+                                    <X className="mr-2 h-4 w-4" />Cancelar
+                                </button>
+                                <button onClick={handleSave} disabled={saving} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
+                                    <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar Parceiro"}
+                                </button>
+                            </NeoDialogActions>
+                        </NeoDialogContent>
+                    </NeoDialog>
                 </div>
             </div>
 

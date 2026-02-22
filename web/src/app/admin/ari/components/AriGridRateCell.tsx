@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Loader2, Lock, Sparkles, Trash2, X } from 'lucide-react';
+import { Eye, Loader2, Lock, Sparkles, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { createPortal } from 'react-dom';
+import { OccupancyBreakdownModal } from './OccupancyBreakdownModal';
 
 interface AriGridRateCellProps {
     date: string;
     roomTypeId: string;
+    ratePlanId: string;
     ratePlanCode: string;
     initialRate: number | null;
     isDerived: boolean;
@@ -17,6 +19,7 @@ interface AriGridRateCellProps {
 export function AriGridRateCell({
     date,
     roomTypeId,
+    ratePlanId,
     ratePlanCode,
     initialRate,
     isDerived,
@@ -28,6 +31,7 @@ export function AriGridRateCell({
     const [isSaving, setIsSaving] = useState(false);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showBreakdown, setShowBreakdown] = useState(false);
     const [mounted, setMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -217,13 +221,38 @@ export function AriGridRateCell({
             {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin text-primary my-1" />
             ) : (
-                <span className={cn(
-                    "text-sm font-bold tracking-tight flex items-center gap-1",
-                    isManualOverride ? "text-amber-700" : isDerived ? "text-blue-700" : "text-foreground"
-                )}>
-                    {initialRate !== null && initialRate !== undefined ? `$${initialRate.toFixed(2)}` : '-'}
-                </span>
+                <div className="flex items-center gap-1.5 py-0.5">
+                    <span className={cn(
+                        "text-sm font-bold tracking-tight",
+                        isManualOverride ? "text-amber-700" : isDerived ? "text-blue-700" : "text-foreground"
+                    )}>
+                        {initialRate !== null && initialRate !== undefined ? `$${initialRate.toFixed(2)}` : '-'}
+                    </span>
+
+                    {initialRate !== null && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowBreakdown(true);
+                            }}
+                            className="p-1 rounded hover:bg-secondary text-muted-foreground/40 hover:text-primary transition-colors opacity-0 group-hover/subrow-hover:opacity-100"
+                            title="Ver detalhes de ocupantes"
+                        >
+                            <Eye className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
             )}
+
+            {/* Occupancy Breakdown Modal */}
+            <OccupancyBreakdownModal
+                isOpen={showBreakdown}
+                onClose={() => setShowBreakdown(false)}
+                baseRate={initialRate || 0}
+                ratePlanId={ratePlanId}
+                ratePlanCode={ratePlanCode}
+                date={date}
+            />
 
             {/* Context Menu with Portal */}
             {mounted && contextMenu && !showConfirm && createPortal(

@@ -7,14 +7,14 @@ import {
     NeoTableRow, NeoTableHead, NeoTableCell,
     NeoTableLoading, NeoTableEmpty
 } from "@/components/neo/neo-table"
-import { NeoSheet, NeoSheetContent, NeoSheetHeader, NeoSheetTitle, NeoSheetDescription, NeoSheetTrigger } from "@/components/neo/neo-sheet"
+import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogTrigger, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog"
 import { NeoInput } from "@/components/neo/neo-input"
-import { TrendingUp, PlusCircle, Pencil, Zap, BarChart3, Download } from "lucide-react"
+import { TrendingUp, PlusCircle, Pencil, Zap, BarChart3, Download, X } from "lucide-react"
 
 export default function UpsellPage() {
     const [rules, setRules] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [open, setOpen] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
 
     useEffect(() => {
         const propertyId = "HOTEL_001"
@@ -44,56 +44,60 @@ export default function UpsellPage() {
                         <Download className="mr-2 h-4 w-4 text-muted-foreground" />
                         Exportar
                     </button>
-                    <NeoSheet open={open} onOpenChange={setOpen}>
-                        <NeoSheetTrigger asChild>
+                    <NeoDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <NeoDialogTrigger asChild>
                             <button className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:-translate-y-0.5">
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Nova Regra
                             </button>
-                        </NeoSheetTrigger>
-                        <NeoSheetContent className="w-[400px] sm:w-[540px]">
-                            <NeoSheetHeader>
-                                <NeoSheetTitle>Nova Regra de Upsell</NeoSheetTitle>
-                                <NeoSheetDescription>
+                        </NeoDialogTrigger>
+                        <NeoDialogContent className="sm:max-w-[500px]">
+                            <NeoDialogHeader>
+                                <NeoDialogTitle>Nova Regra de Upsell</NeoDialogTitle>
+                                <NeoDialogDescription>
                                     Defina a lógica de upgrade automático para os hóspedes.
-                                </NeoSheetDescription>
-                            </NeoSheetHeader>
-                            <div className="py-6 space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                        Código da Regra
-                                    </label>
-                                    <NeoInput placeholder="ex: UPGRADE_SUITE" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                        Quarto de Destino
-                                    </label>
-                                    <NeoInput placeholder="ex: SUITE_DELUXE" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                </NeoDialogDescription>
+                            </NeoDialogHeader>
+                            <NeoDialogBody>
+                                <div className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                            Preço do Upgrade
+                                            Código da Regra
                                         </label>
-                                        <NeoInput type="number" placeholder="0.00" />
+                                        <NeoInput placeholder="ex: UPGRADE_SUITE" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                            Taxa de Conversão
+                                            Quarto de Destino
                                         </label>
-                                        <NeoInput type="number" placeholder="0.35" />
+                                        <NeoInput placeholder="ex: SUITE_DELUXE" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                                Preço do Upgrade
+                                            </label>
+                                            <NeoInput type="number" placeholder="0.00" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                                Taxa de Conversão
+                                            </label>
+                                            <NeoInput type="number" placeholder="0.35" />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="pt-4">
-                                    <button className="inline-flex w-full h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90">
-                                        <Zap className="mr-2 h-4 w-4" />
-                                        Salvar Regra
-                                    </button>
-                                </div>
-                            </div>
-                        </NeoSheetContent>
-                    </NeoSheet>
+                            </NeoDialogBody>
+                            <NeoDialogActions>
+                                <button onClick={() => setDialogOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-6 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
+                                    <X className="mr-2 h-4 w-4" />Cancelar
+                                </button>
+                                <button className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90">
+                                    <Zap className="mr-2 h-4 w-4" />Salvar Regra
+                                </button>
+                            </NeoDialogActions>
+                        </NeoDialogContent>
+                    </NeoDialog>
                 </div>
             </div>
 

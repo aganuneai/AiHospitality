@@ -7,7 +7,7 @@ import {
     NeoTableRow, NeoTableHead, NeoTableCell,
     NeoTableLoading, NeoTableEmpty
 } from "@/components/neo/neo-table"
-import { NeoSheet, NeoSheetContent, NeoSheetHeader, NeoSheetTitle, NeoSheetDescription, NeoSheetTrigger } from "@/components/neo/neo-sheet"
+import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogTrigger, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog"
 import { NeoInput } from "@/components/neo/neo-input"
 import { BadgeDollarSign, PlusCircle, Pencil, Download, Trash2, Check, X, List, Sparkles } from "lucide-react"
 
@@ -20,6 +20,27 @@ type RatePlan = {
     derivedType?: string | null;
     derivedValue?: string | number | null;
     roundingRule?: string | null;
+
+    // Multi-Occupancy Adults (Derived from Double)
+    singleType?: string | null;
+    singleValue?: string | number | null;
+    tripleType?: string | null;
+    tripleValue?: string | number | null;
+    quadType?: string | null;
+    quadValue?: string | number | null;
+    extraAdultType?: string | null;
+    extraAdultValue?: string | number | null;
+
+    // Child Tiers (Fixed Price, Sequential)
+    childTier1Active?: boolean;
+    childTier1MaxAge?: number;
+    childTier1Price?: string | number | null;
+    childTier2Active?: boolean;
+    childTier2MaxAge?: number;
+    childTier2Price?: string | number | null;
+    childTier3Active?: boolean;
+    childTier3MaxAge?: number;
+    childTier3Price?: string | number | null;
 }
 const EMPTY: Partial<RatePlan> = {
     code: "",
@@ -28,13 +49,30 @@ const EMPTY: Partial<RatePlan> = {
     parentRatePlanId: null,
     derivedType: "PERCENTAGE",
     derivedValue: "",
-    roundingRule: "NONE"
+    roundingRule: "NONE",
+    singleType: "PERCENTAGE",
+    singleValue: 0,
+    tripleType: "PERCENTAGE",
+    tripleValue: 0,
+    quadType: "PERCENTAGE",
+    quadValue: 0,
+    extraAdultType: "FIXED_AMOUNT",
+    extraAdultValue: 0,
+    childTier1Active: false,
+    childTier1MaxAge: 0,
+    childTier1Price: 0,
+    childTier2Active: false,
+    childTier2MaxAge: 5,
+    childTier2Price: 0,
+    childTier3Active: false,
+    childTier3MaxAge: 12,
+    childTier3Price: 0
 }
 
 export default function RatePlansPage() {
     const [ratePlans, setRatePlans] = useState<RatePlan[]>([])
     const [loading, setLoading] = useState(true)
-    const [sheetOpen, setSheetOpen] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
     const [form, setForm] = useState<Partial<RatePlan>>(EMPTY)
     const [editing, setEditing] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -50,8 +88,8 @@ export default function RatePlansPage() {
 
     useEffect(() => { load() }, [])
 
-    const openCreate = () => { setEditing(null); setForm(EMPTY); setError(null); setSheetOpen(true) }
-    const openEdit = (rp: RatePlan) => { setEditing(rp.id); setForm({ ...rp }); setError(null); setSheetOpen(true) }
+    const openCreate = () => { setEditing(null); setForm(EMPTY); setError(null); setDialogOpen(true) }
+    const openEdit = (rp: RatePlan) => { setEditing(rp.id); setForm({ ...rp }); setError(null); setDialogOpen(true) }
 
     const handleSave = async () => {
         setSaving(true); setError(null)
@@ -64,7 +102,7 @@ export default function RatePlansPage() {
                 body: JSON.stringify(form)
             })
             if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-            setSheetOpen(false); load()
+            setDialogOpen(false); load()
         } catch (e: any) { setError(e.message) }
         finally { setSaving(false) }
     }
@@ -86,105 +124,261 @@ export default function RatePlansPage() {
                     <button className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 bg-secondary/30 px-4 py-2 text-sm font-semibold text-foreground transition-all hover:bg-secondary">
                         <Download className="mr-2 h-4 w-4 text-muted-foreground" />Exportar
                     </button>
-                    <NeoSheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                        <NeoSheetTrigger asChild>
+                    <NeoDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <NeoDialogTrigger asChild>
                             <button onClick={openCreate} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:-translate-y-0.5">
                                 <PlusCircle className="mr-2 h-4 w-4" />Novo Rate Plan
                             </button>
-                        </NeoSheetTrigger>
-                        <NeoSheetContent className="w-[420px] sm:w-[560px]">
-                            <NeoSheetHeader>
-                                <NeoSheetTitle>{editing ? "Editar Rate Plan" : "Novo Rate Plan"}</NeoSheetTitle>
-                                <NeoSheetDescription>O código será usado como identificador no sistema de distribuição.</NeoSheetDescription>
-                            </NeoSheetHeader>
-                            <div className="py-6 space-y-4">
-                                {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
-                                        <NeoInput value={form.code ?? ""} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ex: BAR, BB, CORP" disabled={!!editing} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome *</label>
-                                        <NeoInput value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Best Available Rate" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Descrição</label>
-                                    <NeoInput value={form.description ?? ""} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição do plano tarifário..." />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tarifa Pai (Derivação)</label>
-                                        <select
-                                            value={form.parentRatePlanId ?? ""}
-                                            onChange={e => setForm(f => ({ ...f, parentRatePlanId: e.target.value || null }))}
-                                            className="h-10 w-full bg-background border border-border/50 rounded-lg text-sm px-3 focus:ring-1 focus:ring-primary outline-none"
-                                        >
-                                            <option value="">Nenhuma (Independente)</option>
-                                            {ratePlans.filter(rp => rp.id !== editing).map(rp => (
-                                                <option key={rp.id} value={rp.id}>{rp.name} ({rp.code})</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Arredondamento</label>
-                                        <select
-                                            value={form.roundingRule ?? "NONE"}
-                                            onChange={e => setForm(f => ({ ...f, roundingRule: e.target.value }))}
-                                            className="h-10 w-full bg-background border border-border/50 rounded-lg text-sm px-3 focus:ring-1 focus:ring-primary outline-none"
-                                        >
-                                            <option value="NONE">Sem Arredondamento</option>
-                                            <option value="NEAREST_WHOLE">Inteiro mais Próximo</option>
-                                            <option value="ENDING_99">Final .99</option>
-                                            <option value="ENDING_90">Final .90</option>
-                                            <option value="MULTIPLE_5">Múltiplo de 5</option>
-                                            <option value="MULTIPLE_10">Múltiplo de 10</option>
-                                        </select>
-                                    </div>
-                                </div>
+                        </NeoDialogTrigger>
+                        <NeoDialogContent className="sm:max-w-[600px]">
+                            <NeoDialogHeader>
+                                <NeoDialogTitle>{editing ? "Editar Rate Plan" : "Novo Rate Plan"}</NeoDialogTitle>
+                                <NeoDialogDescription>O código será usado como identificador no sistema de distribuição.</NeoDialogDescription>
+                            </NeoDialogHeader>
 
-                                {form.parentRatePlanId && (
-                                    <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                        <p className="text-xs font-bold text-primary flex items-center gap-2">
-                                            <Sparkles className="w-3 h-3" /> CONFIGURAÇÃO DE DERIVAÇÃO
-                                        </p>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de Cálculo</label>
-                                                <select
-                                                    value={form.derivedType ?? "PERCENTAGE"}
-                                                    onChange={e => setForm(f => ({ ...f, derivedType: e.target.value }))}
-                                                    className="h-10 w-full bg-background border border-border/50 rounded-lg text-sm px-3 focus:ring-1 focus:ring-primary outline-none"
-                                                >
-                                                    <option value="PERCENTAGE">Porcentagem (%)</option>
-                                                    <option value="FIXED_AMOUNT">Valor Fixo ($)</option>
-                                                </select>
+                            <NeoDialogBody>
+                                <div className="space-y-6">
+                                    {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
+                                            <NeoInput value={form.code ?? ""} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ex: BAR, BB, CORP" disabled={!!editing} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome *</label>
+                                            <NeoInput value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Best Available Rate" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Descrição</label>
+                                        <NeoInput value={form.description ?? ""} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição do plano tarifário..." />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tarifa Pai (Derivação)</label>
+                                            <select
+                                                value={form.parentRatePlanId ?? ""}
+                                                onChange={e => setForm(f => ({ ...f, parentRatePlanId: e.target.value || null }))}
+                                                className="h-10 w-full bg-background border border-border/50 rounded-lg text-sm px-3 focus:ring-1 focus:ring-primary outline-none"
+                                            >
+                                                <option value="">Nenhuma (Independente)</option>
+                                                {ratePlans.filter(rp => rp.id !== editing).map(rp => (
+                                                    <option key={rp.id} value={rp.id}>{rp.name} ({rp.code})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Arredondamento</label>
+                                            <select
+                                                value={form.roundingRule ?? "NONE"}
+                                                onChange={e => setForm(f => ({ ...f, roundingRule: e.target.value }))}
+                                                className="h-10 w-full bg-background border border-border/50 rounded-lg text-sm px-3 focus:ring-1 focus:ring-primary outline-none"
+                                            >
+                                                <option value="NONE">Sem Arredondamento</option>
+                                                <option value="NEAREST_WHOLE">Inteiro mais Próximo</option>
+                                                <option value="ENDING_99">Final .99</option>
+                                                <option value="ENDING_90">Final .90</option>
+                                                <option value="MULTIPLE_5">Múltiplo de 5</option>
+                                                <option value="MULTIPLE_10">Múltiplo de 10</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {form.parentRatePlanId && (
+                                        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                            <p className="text-xs font-bold text-primary flex items-center gap-2">
+                                                <Sparkles className="w-3 h-3" /> DERIVAÇÃO (PLANO PAI)
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de Cálculo</label>
+                                                    <select
+                                                        value={form.derivedType ?? "PERCENTAGE"}
+                                                        onChange={e => setForm(f => ({ ...f, derivedType: e.target.value }))}
+                                                        className="h-10 w-full bg-background border border-border/50 rounded-lg text-sm px-3 focus:ring-1 focus:ring-primary outline-none"
+                                                    >
+                                                        <option value="PERCENTAGE">Porcentagem (%)</option>
+                                                        <option value="FIXED_AMOUNT">Valor Fixo ($)</option>
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ajuste (ex: -10 ou 15)</label>
+                                                    <NeoInput
+                                                        type="number"
+                                                        value={form.derivedValue ?? ""}
+                                                        onChange={e => setForm(f => ({ ...f, derivedValue: e.target.value }))}
+                                                        placeholder="Valor do ajuste..."
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ajuste (ex: -10 ou 15)</label>
-                                                <NeoInput
-                                                    type="number"
-                                                    value={form.derivedValue ?? ""}
-                                                    onChange={e => setForm(f => ({ ...f, derivedValue: e.target.value }))}
-                                                    placeholder="Valor do ajuste..."
-                                                />
+                                        </div>
+                                    )}
+
+                                    {/* Multi-Occupancy Section */}
+                                    <div className="p-4 bg-secondary/20 rounded-xl border border-border/40 space-y-6">
+                                        <div className="space-y-4">
+                                            <p className="text-xs font-bold text-foreground flex items-center gap-2 uppercase tracking-widest">
+                                                <BadgeDollarSign className="w-4 h-4 text-primary" /> Ocupação Adultos (Derivado do Duplo)
+                                            </p>
+
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {/* Single */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-24 text-xs font-bold text-muted-foreground">Individual:</div>
+                                                    <select
+                                                        value={form.singleType ?? "PERCENTAGE"}
+                                                        onChange={e => setForm(f => ({ ...f, singleType: e.target.value }))}
+                                                        className="h-9 bg-background border border-border/50 rounded-lg text-xs px-2 outline-none w-32"
+                                                    >
+                                                        <option value="PERCENTAGE">Ajuste %</option>
+                                                        <option value="FIXED_AMOUNT">Valor Fixo +/-</option>
+                                                    </select>
+                                                    <NeoInput className="h-9 text-xs" type="number" value={form.singleValue ?? 0} onChange={e => setForm(f => ({ ...f, singleValue: e.target.value }))} />
+                                                </div>
+
+                                                {/* Triple */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-24 text-xs font-bold text-muted-foreground">Triplo:</div>
+                                                    <select
+                                                        value={form.tripleType ?? "PERCENTAGE"}
+                                                        onChange={e => setForm(f => ({ ...f, tripleType: e.target.value }))}
+                                                        className="h-9 bg-background border border-border/50 rounded-lg text-xs px-2 outline-none w-32"
+                                                    >
+                                                        <option value="PERCENTAGE">Ajuste %</option>
+                                                        <option value="FIXED_AMOUNT">Valor Fixo +/-</option>
+                                                    </select>
+                                                    <NeoInput className="h-9 text-xs" type="number" value={form.tripleValue ?? 0} onChange={e => setForm(f => ({ ...f, tripleValue: e.target.value }))} />
+                                                </div>
+
+                                                {/* Quad */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-24 text-xs font-bold text-muted-foreground">Quádruplo:</div>
+                                                    <select
+                                                        value={form.quadType ?? "PERCENTAGE"}
+                                                        onChange={e => setForm(f => ({ ...f, quadType: e.target.value }))}
+                                                        className="h-9 bg-background border border-border/50 rounded-lg text-xs px-2 outline-none w-32"
+                                                    >
+                                                        <option value="PERCENTAGE">Ajuste %</option>
+                                                        <option value="FIXED_AMOUNT">Valor Fixo +/-</option>
+                                                    </select>
+                                                    <NeoInput className="h-9 text-xs" type="number" value={form.quadValue ?? 0} onChange={e => setForm(f => ({ ...f, quadValue: e.target.value }))} />
+                                                </div>
+
+                                                {/* Extra Adult (fixed from 5th) */}
+                                                <div className="flex items-center gap-3 pt-2 border-t border-border/20">
+                                                    <div className="w-24 text-xs font-bold text-muted-foreground">Adulto Extra:</div>
+                                                    <span className="text-[10px] bg-secondary px-2 py-1 rounded font-mono uppercase">Fixo p/ pessoa</span>
+                                                    <NeoInput className="h-9 text-xs" type="number" value={form.extraAdultValue ?? 0} onChange={e => setForm(f => ({ ...f, extraAdultValue: e.target.value }))} />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Children Section */}
+                                        <div className="space-y-4 pt-4 border-t border-border/40">
+                                            <p className="text-xs font-bold text-foreground flex items-center gap-2 uppercase tracking-widest">
+                                                <List className="w-4 h-4 text-primary" /> Configuração de Crianças (Preço Fixo)
+                                            </p>
+
+                                            <div className="space-y-4">
+                                                {/* Tier 1 */}
+                                                <div className="flex flex-col gap-2 p-3 bg-secondary/30 rounded-lg border border-border/50">
+                                                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
+                                                        const active = !form.childTier1Active;
+                                                        setForm(f => ({
+                                                            ...f,
+                                                            childTier1Active: active,
+                                                            childTier2Active: active ? f.childTier2Active : false,
+                                                            childTier3Active: active ? f.childTier3Active : false
+                                                        }));
+                                                    }}>
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${form.childTier1Active ? 'bg-primary border-primary' : 'bg-background border-border/60'}`}>
+                                                            {form.childTier1Active && <Check className="w-3 h-3 text-primary-foreground" />}
+                                                        </div>
+                                                        <span className="text-xs font-bold uppercase">Faixa Etária 1</span>
+                                                    </div>
+                                                    {form.childTier1Active && (
+                                                        <div className="grid grid-cols-2 gap-3 mt-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Idade Máxima</label>
+                                                                <NeoInput type="number" className="h-8 text-xs" value={form.childTier1MaxAge ?? 0} onChange={e => setForm(f => ({ ...f, childTier1MaxAge: parseInt(e.target.value) }))} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Valor Fixo</label>
+                                                                <NeoInput type="number" className="h-8 text-xs" value={form.childTier1Price ?? 0} onChange={e => setForm(f => ({ ...f, childTier1Price: e.target.value }))} />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Tier 2 */}
+                                                <div className={`flex flex-col gap-2 p-3 bg-secondary/30 rounded-lg border border-border/50 transition-opacity ${!form.childTier1Active ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
+                                                        const active = !form.childTier2Active;
+                                                        setForm(f => ({
+                                                            ...f,
+                                                            childTier2Active: active,
+                                                            childTier3Active: active ? f.childTier3Active : false
+                                                        }));
+                                                    }}>
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${form.childTier2Active ? 'bg-primary border-primary' : 'bg-background border-border/60'}`}>
+                                                            {form.childTier2Active && <Check className="w-3 h-3 text-primary-foreground" />}
+                                                        </div>
+                                                        <span className="text-xs font-bold uppercase">Faixa Etária 2</span>
+                                                    </div>
+                                                    {form.childTier2Active && (
+                                                        <div className="grid grid-cols-2 gap-3 mt-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Idade Máxima</label>
+                                                                <NeoInput type="number" className="h-8 text-xs" value={form.childTier2MaxAge ?? 5} onChange={e => setForm(f => ({ ...f, childTier2MaxAge: parseInt(e.target.value) }))} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Valor Fixo</label>
+                                                                <NeoInput type="number" className="h-8 text-xs" value={form.childTier2Price ?? 0} onChange={e => setForm(f => ({ ...f, childTier2Price: e.target.value }))} />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Tier 3 */}
+                                                <div className={`flex flex-col gap-2 p-3 bg-secondary/30 rounded-lg border border-border/50 transition-opacity ${!form.childTier2Active ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
+                                                        const active = !form.childTier3Active;
+                                                        setForm(f => ({ ...f, childTier3Active: active }));
+                                                    }}>
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${form.childTier3Active ? 'bg-primary border-primary' : 'bg-background border-border/60'}`}>
+                                                            {form.childTier3Active && <Check className="w-3 h-3 text-primary-foreground" />}
+                                                        </div>
+                                                        <span className="text-xs font-bold uppercase">Faixa Etária 3</span>
+                                                    </div>
+                                                    {form.childTier3Active && (
+                                                        <div className="grid grid-cols-2 gap-3 mt-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Idade Máxima</label>
+                                                                <NeoInput type="number" className="h-8 text-xs" value={form.childTier3MaxAge ?? 12} onChange={e => setForm(f => ({ ...f, childTier3MaxAge: parseInt(e.target.value) }))} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Valor Fixo</label>
+                                                                <NeoInput type="number" className="h-8 text-xs" value={form.childTier3Price ?? 0} onChange={e => setForm(f => ({ ...f, childTier3Price: e.target.value }))} />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                )}
-
-                                <div className="pt-4 flex gap-3">
-                                    <button onClick={handleSave} disabled={saving} className="inline-flex flex-1 h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
-                                        <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar"}
-                                    </button>
-                                    <button onClick={() => setSheetOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-4 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
-                                        <X className="mr-2 h-4 w-4" />Cancelar
-                                    </button>
                                 </div>
-                            </div>
-                        </NeoSheetContent>
-                    </NeoSheet>
+                            </NeoDialogBody>
+
+                            <NeoDialogActions>
+                                <button onClick={() => setDialogOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-6 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
+                                    <X className="mr-2 h-4 w-4" />Cancelar
+                                </button>
+                                <button onClick={handleSave} disabled={saving} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
+                                    <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar Alterações"}
+                                </button>
+                            </NeoDialogActions>
+                        </NeoDialogContent>
+                    </NeoDialog>
                 </div>
             </div>
 

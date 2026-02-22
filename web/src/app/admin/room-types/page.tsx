@@ -7,7 +7,7 @@ import {
     NeoTableRow, NeoTableHead, NeoTableCell,
     NeoTableLoading, NeoTableEmpty
 } from "@/components/neo/neo-table"
-import { NeoSheet, NeoSheetContent, NeoSheetHeader, NeoSheetTitle, NeoSheetDescription, NeoSheetTrigger } from "@/components/neo/neo-sheet"
+import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogTrigger, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog"
 import { NeoInput } from "@/components/neo/neo-input"
 import { Hotel, PlusCircle, Pencil, Bed, Users, Download, Trash2, Check, X } from "lucide-react"
 
@@ -25,7 +25,7 @@ const EMPTY: Partial<RoomType> = { code: "", name: "", description: "", maxAdult
 export default function RoomTypesPage() {
     const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
     const [loading, setLoading] = useState(true)
-    const [sheetOpen, setSheetOpen] = useState(false)
+    const [dialogOpen, setDialogOpen] = useState(false)
     const [form, setForm] = useState<Partial<RoomType>>(EMPTY)
     const [editing, setEditing] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -41,8 +41,8 @@ export default function RoomTypesPage() {
 
     useEffect(() => { fetchRoomTypes() }, [])
 
-    const openCreate = () => { setEditing(null); setForm(EMPTY); setError(null); setSheetOpen(true) }
-    const openEdit = (rt: RoomType) => { setEditing(rt.id); setForm({ ...rt }); setError(null); setSheetOpen(true) }
+    const openCreate = () => { setEditing(null); setForm(EMPTY); setError(null); setDialogOpen(true) }
+    const openEdit = (rt: RoomType) => { setEditing(rt.id); setForm({ ...rt }); setError(null); setDialogOpen(true) }
 
     const handleSave = async () => {
         setSaving(true); setError(null)
@@ -55,7 +55,7 @@ export default function RoomTypesPage() {
                 body: JSON.stringify(form)
             })
             if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-            setSheetOpen(false); fetchRoomTypes()
+            setDialogOpen(false); fetchRoomTypes()
         } catch (e: any) { setError(e.message) }
         finally { setSaving(false) }
     }
@@ -78,54 +78,56 @@ export default function RoomTypesPage() {
                     <button className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 bg-secondary/30 px-4 py-2 text-sm font-semibold text-foreground transition-all hover:bg-secondary">
                         <Download className="mr-2 h-4 w-4 text-muted-foreground" />Exportar
                     </button>
-                    <NeoSheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                        <NeoSheetTrigger asChild>
+                    <NeoDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <NeoDialogTrigger asChild>
                             <button onClick={openCreate} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:-translate-y-0.5">
                                 <PlusCircle className="mr-2 h-4 w-4" />Novo Tipo
                             </button>
-                        </NeoSheetTrigger>
-                        <NeoSheetContent className="w-[420px] sm:w-[560px]">
-                            <NeoSheetHeader>
-                                <NeoSheetTitle>{editing ? "Editar Tipo de Quarto" : "Novo Tipo de Quarto"}</NeoSheetTitle>
-                                <NeoSheetDescription>Defina as capacidades e descrição da categoria.</NeoSheetDescription>
-                            </NeoSheetHeader>
-                            <div className="py-6 space-y-4">
-                                {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
-                                        <NeoInput value={form.code ?? ""} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ex: STD, DLX, SUITE" disabled={!!editing} />
+                        </NeoDialogTrigger>
+                        <NeoDialogContent className="sm:max-w-[500px]">
+                            <NeoDialogHeader>
+                                <NeoDialogTitle>{editing ? "Editar Tipo de Quarto" : "Novo Tipo de Quarto"}</NeoDialogTitle>
+                                <NeoDialogDescription>Defina as capacidades e descrição da categoria.</NeoDialogDescription>
+                            </NeoDialogHeader>
+                            <NeoDialogBody>
+                                <div className="space-y-4">
+                                    {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
+                                            <NeoInput value={form.code ?? ""} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ex: STD, DLX, SUITE" disabled={!!editing} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome *</label>
+                                            <NeoInput value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Quarto Deluxe" />
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome *</label>
-                                        <NeoInput value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Quarto Deluxe" />
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Descrição</label>
+                                        <NeoInput value={form.description ?? ""} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição para o hóspede..." />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Máx. Adultos</label>
+                                            <NeoInput type="number" min={1} max={10} value={form.maxAdults ?? 2} onChange={e => setForm(f => ({ ...f, maxAdults: Number(e.target.value) }))} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Máx. Crianças</label>
+                                            <NeoInput type="number" min={0} max={10} value={form.maxChildren ?? 0} onChange={e => setForm(f => ({ ...f, maxChildren: Number(e.target.value) }))} />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Descrição</label>
-                                    <NeoInput value={form.description ?? ""} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição para o hóspede..." />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Máx. Adultos</label>
-                                        <NeoInput type="number" min={1} max={10} value={form.maxAdults ?? 2} onChange={e => setForm(f => ({ ...f, maxAdults: Number(e.target.value) }))} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Máx. Crianças</label>
-                                        <NeoInput type="number" min={0} max={10} value={form.maxChildren ?? 0} onChange={e => setForm(f => ({ ...f, maxChildren: Number(e.target.value) }))} />
-                                    </div>
-                                </div>
-                                <div className="pt-4 flex gap-3">
-                                    <button onClick={handleSave} disabled={saving} className="inline-flex flex-1 h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
-                                        <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar"}
-                                    </button>
-                                    <button onClick={() => setSheetOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-4 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
-                                        <X className="mr-2 h-4 w-4" />Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        </NeoSheetContent>
-                    </NeoSheet>
+                            </NeoDialogBody>
+                            <NeoDialogActions>
+                                <button onClick={() => setDialogOpen(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 px-6 text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary">
+                                    <X className="mr-2 h-4 w-4" />Cancelar
+                                </button>
+                                <button onClick={handleSave} disabled={saving} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:opacity-50">
+                                    <Check className="mr-2 h-4 w-4" />{saving ? "Salvando..." : "Salvar"}
+                                </button>
+                            </NeoDialogActions>
+                        </NeoDialogContent>
+                    </NeoDialog>
                 </div>
             </div>
 
