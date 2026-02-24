@@ -109,7 +109,7 @@ export class QuoteService {
                 pricingSignature,
                 roomTypeCode: room.code,
                 ratePlanCode,
-                currency: "USD",
+                currency: "BRL",
                 total: grandTotal,
                 breakdown,
                 policies: {

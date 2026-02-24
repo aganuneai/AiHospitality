@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import { NeoCard, NeoCardContent, NeoCardHeader, NeoCardTitle } from '@/components/neo/neo-card';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface RevenueDataPoint {
     period: string;
     revenue: number;
@@ -25,11 +27,8 @@ interface RevenueChartProps {
 
 export function RevenueChart({ data, title = 'Revenue Over Time' }: RevenueChartProps) {
     // Format currency for tooltip
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(value);
+    const formatValue = (value: number) => {
+        return formatCurrency(value);
     };
 
     // Custom tooltip
@@ -41,7 +40,7 @@ export function RevenueChart({ data, title = 'Revenue Over Time' }: RevenueChart
                     <div className="space-y-1">
                         <p className="text-sm font-semibold text-primary flex items-center justify-between gap-4">
                             <span>Receita:</span>
-                            <span>{formatCurrency(payload[0].value)}</span>
+                            <span>{formatValue(payload[0].value)}</span>
                         </p>
                         <p className="text-sm font-semibold text-emerald-500 flex items-center justify-between gap-4">
                             <span>Reservas:</span>

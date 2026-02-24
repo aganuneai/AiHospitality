@@ -125,11 +125,22 @@ export class GuestService {
         phone?: string;
         document?: any;
         preferences?: any;
+        dateOfBirth?: string | Date | null;
+        language?: string;
+        nationality?: string;
+        marketCode?: string;
+        active?: boolean;
+        doNotDisturb?: boolean;
+        noPost?: boolean;
+        loyaltyTier?: string;
+        loyaltyPoints?: number;
     }) {
+        const { dateOfBirth, ...rest } = data;
         return prisma.guestProfile.update({
             where: { id },
             data: {
-                ...data,
+                ...rest,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
                 updatedAt: new Date()
             }
         });

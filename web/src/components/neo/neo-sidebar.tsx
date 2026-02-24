@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
     LayoutDashboard,
@@ -20,7 +20,8 @@ import {
     DoorClosed,
     BadgeDollarSign,
     Handshake,
-    BedDouble
+    BedDouble,
+    LayoutGrid
 } from "lucide-react"
 
 type NavItem = {
@@ -48,8 +49,9 @@ const NAVIGATION: NavGroup[] = [
         label: "Receita & Inventário",
         items: [
             { title: "Mapa ARI", href: "/admin/ari", icon: <CalendarRange size={18} /> },
+            { title: "Matriz Cockpit", href: "/admin/inventory/matrix", icon: <LayoutGrid size={18} /> },
             { title: "Ocupação", href: "/admin/analytics/occupancy", icon: <LineChart size={18} /> },
-            { title: "Auditoria de Receita", href: "/admin/analytics/revenue", icon: <Wallet size={18} /> },
+            { title: "Gestão de Receita", href: "/admin/analytics/revenue", icon: <Wallet size={18} /> },
         ]
     },
     {
@@ -80,6 +82,7 @@ const NAVIGATION: NavGroup[] = [
 
 export function NeoSidebar({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
     const pathname = usePathname()
+    const searchParams = useSearchParams()
 
     return (
         <aside className={cn("pb-12 w-72 border-r border-border/50 bg-sidebar/80 backdrop-blur-xl h-screen sticky top-0 flex flex-col shadow-sm transition-all duration-300", className)} {...props}>
@@ -105,19 +108,16 @@ export function NeoSidebar({ className, ...props }: React.HTMLAttributes<HTMLDiv
                                 {group.label}
                             </h4>
                             <div className="space-y-1">
-                                {group.items.map((item) => {
-                                    const allItems = NAVIGATION.flatMap(g => g.items);
-                                    const isActive = pathname === item.href || (
-                                        pathname.startsWith(item.href) &&
-                                        item.href !== '/admin' &&
-                                        !allItems.some(other =>
-                                            other.href !== item.href &&
-                                            pathname.startsWith(other.href) &&
-                                            other.href.length > item.href.length
-                                        )
+                                {group.items.map((item, index) => {
+                                    const [itemPath, itemQuery] = item.href.split('?')
+                                    const isActive = pathname === itemPath && (
+                                        itemQuery
+                                            ? searchParams.toString() === itemQuery
+                                            : !searchParams.toString()
                                     );
+
                                     return (
-                                        <Link key={item.href} href={item.href}>
+                                        <Link key={`${item.href}-${index}`} href={item.href}>
                                             <div className={cn(
                                                 "group flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                                                 isActive

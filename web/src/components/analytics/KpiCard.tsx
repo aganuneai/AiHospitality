@@ -2,6 +2,8 @@ import { LucideIcon } from 'lucide-react';
 import { NeoCard, NeoCardContent, NeoCardHeader, NeoCardTitle } from '@/components/neo/neo-card';
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from 'lucide-react';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface KpiCardProps {
     title: string;
     value: string | number;
@@ -19,10 +21,7 @@ export function KpiCard({ title, value, icon: Icon, trend, format = 'number' }: 
 
         switch (format) {
             case 'currency':
-                return new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'USD'
-                }).format(val);
+                return formatCurrency(val);
             case 'percentage':
                 return `${val.toFixed(1)}%`;
             case 'number':

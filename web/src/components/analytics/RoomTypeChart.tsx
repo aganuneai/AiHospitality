@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import { NeoCard, NeoCardContent, NeoCardHeader, NeoCardTitle } from '@/components/neo/neo-card';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface RoomTypeData {
     roomType: string;
     revenue: number;
@@ -26,12 +28,8 @@ interface RoomTypeChartProps {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export function RoomTypeChart({ data, title = 'Revenue by Room Type' }: RoomTypeChartProps) {
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'USD',
-            notation: 'compact'
-        }).format(value);
+    const formatValue = (value: number, compact: boolean = false) => {
+        return formatCurrency(value, 'BRL', compact ? { notation: 'compact' } : undefined);
     };
 
     const CustomTooltip = ({ active, payload }: any) => {
@@ -42,7 +40,7 @@ export function RoomTypeChart({ data, title = 'Revenue by Room Type' }: RoomType
                     <div className="space-y-1">
                         <p className="text-sm font-semibold flex flex-col justify-between gap-1" style={{ color: payload[0].fill }}>
                             <span className="text-muted-foreground opacity-80 text-xs">Receita</span>
-                            <span>{formatCurrency(payload[0].value)}</span>
+                            <span>{formatValue(payload[0].value)}</span>
                         </p>
                         <p className="text-sm font-semibold text-muted-foreground flex flex-col justify-between gap-1">
                             <span className="text-xs opacity-80">Reservas</span>
@@ -72,7 +70,7 @@ export function RoomTypeChart({ data, title = 'Revenue by Room Type' }: RoomType
                             type="number"
                             className="text-xs font-semibold"
                             tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                            tickFormatter={formatCurrency}
+                            tickFormatter={(val) => formatValue(val, true)}
                             tickLine={false}
                             axisLine={false}
                         />

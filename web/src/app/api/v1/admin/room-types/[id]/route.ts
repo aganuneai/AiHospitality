@@ -33,6 +33,67 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
+
+        // 1. Verificar se existem quartos físicos vinculados
+        const roomsCount = await prisma.room.count({
+            where: { roomTypeId: id }
+        });
+
+        if (roomsCount > 0) {
+            return NextResponse.json(
+                { error: `Não é possível excluir: existem ${roomsCount} quartos vinculados a este tipo.` },
+                { status: 400 }
+            );
+        }
+
+        // 2. Verificar se existem reservas vinculadas
+        const reservationsCount = await prisma.reservation.count({
+            where: { roomTypeId: id }
+        });
+
+        if (reservationsCount > 0) {
+            return NextResponse.json(
+                { error: `Não é possível excluir: existem ${reservationsCount} reservas vinculadas a este tipo (incluindo histórico).` },
+                { status: 400 }
+            );
+        }
+
+        // 3. Verificar Inventário
+        const inventoryCount = await prisma.inventory.count({
+            where: { roomTypeId: id }
+        });
+
+        if (inventoryCount > 0) {
+            return NextResponse.json(
+                { error: `Não é possível excluir: existem registros de inventário/disponibilidade para este tipo.` },
+                { status: 400 }
+            );
+        }
+
+        // 4. Verificar Tarifas
+        const ratesCount = await prisma.rate.count({
+            where: { roomTypeId: id }
+        });
+
+        if (ratesCount > 0) {
+            return NextResponse.json(
+                { error: `Não é possível excluir: existem tarifas configuradas para este tipo.` },
+                { status: 400 }
+            );
+        }
+
+        // 5. Verificar Pacotes
+        const packagesCount = await prisma.package.count({
+            where: { roomTypeId: id }
+        });
+
+        if (packagesCount > 0) {
+            return NextResponse.json(
+                { error: `Não é possível excluir: este tipo faz parte de pacotes promocionais ativos.` },
+                { status: 400 }
+            );
+        }
+
         await prisma.roomType.delete({ where: { id } });
         return NextResponse.json({ success: true });
     } catch (error: any) {

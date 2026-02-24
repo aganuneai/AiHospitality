@@ -11,11 +11,22 @@ import { cn } from "@/lib/utils"
 interface BookingContextBlockProps {
     checkIn: Date | undefined
     checkOut: Date | undefined
+    checkInTime: string
+    checkOutTime: string
     onDatesChange: (start: Date | undefined, end: Date | undefined) => void
+    onTimesChange: (field: 'checkInTime' | 'checkOutTime', value: string) => void
     status: string
 }
 
-export function BookingContextBlock({ checkIn, checkOut, onDatesChange, status }: BookingContextBlockProps) {
+export function BookingContextBlock({
+    checkIn,
+    checkOut,
+    checkInTime,
+    checkOutTime,
+    onDatesChange,
+    onTimesChange,
+    status
+}: BookingContextBlockProps) {
     const nights = checkIn && checkOut ? differenceInCalendarDays(checkOut, checkIn) : 0
 
     return (
@@ -33,41 +44,64 @@ export function BookingContextBlock({ checkIn, checkOut, onDatesChange, status }
             </NeoCardHeader>
             <NeoCardContent className="pt-6 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Check-in</label>
-                        {/* Placeholder for DatePicker - standard input for now if DatePicker complex */}
-                        <input
-                            type="date"
-                            className="flex h-9 w-full rounded-none border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            value={checkIn ? format(checkIn, 'yyyy-MM-dd') : ''}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) {
-                                    onDatesChange(undefined, checkOut);
-                                    return;
-                                }
-                                // Use a clean date without time issues
-                                const newDate = new Date(val + 'T12:00:00');
-                                onDatesChange(newDate, checkOut);
-                            }}
-                        />
+                    {/* Check-in group */}
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Check-in Date</label>
+                            <input
+                                type="date"
+                                className="flex h-9 w-full rounded-none border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                value={checkIn ? format(checkIn, 'yyyy-MM-dd') : ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (!val) {
+                                        onDatesChange(undefined, checkOut);
+                                        return;
+                                    }
+                                    const newDate = new Date(val + 'T12:00:00');
+                                    onDatesChange(newDate, checkOut);
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Check-in Time</label>
+                            <input
+                                type="time"
+                                className="flex h-9 w-full rounded-none border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                value={checkInTime}
+                                onChange={(e) => onTimesChange('checkInTime', e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Check-out</label>
-                        <input
-                            type="date"
-                            className="flex h-9 w-full rounded-none border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            value={checkOut ? format(checkOut, 'yyyy-MM-dd') : ''}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) {
-                                    onDatesChange(checkIn, undefined);
-                                    return;
-                                }
-                                const newDate = new Date(val + 'T12:00:00');
-                                onDatesChange(checkIn, newDate);
-                            }}
-                        />
+
+                    {/* Check-out group */}
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Check-out Date</label>
+                            <input
+                                type="date"
+                                className="flex h-9 w-full rounded-none border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                value={checkOut ? format(checkOut, 'yyyy-MM-dd') : ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (!val) {
+                                        onDatesChange(checkIn, undefined);
+                                        return;
+                                    }
+                                    const newDate = new Date(val + 'T12:00:00');
+                                    onDatesChange(checkIn, newDate);
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Check-out Time</label>
+                            <input
+                                type="time"
+                                className="flex h-9 w-full rounded-none border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                value={checkOutTime}
+                                onChange={(e) => onTimesChange('checkOutTime', e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
 

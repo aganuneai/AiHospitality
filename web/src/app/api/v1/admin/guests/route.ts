@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 import { guestService } from '@/lib/services/guest-service';
 import { validateContext, getContext } from '@/lib/context/context';
 import { auditLogService } from '@/lib/services/audit-log.service';
@@ -44,17 +45,20 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
-        // Split name (simple logic for now)
-        const [firstName, ...rest] = body.fullName.split(' ');
-        const lastName = rest.join(' ') || ' ';
-
-        const guest = await guestService.findOrCreate({
-            firstName,
-            lastName,
-            email: body.email,
-            phone: body.phone,
-            documentId: body.document?.number,
-            documentType: body.document?.type
+        const guest = await prisma.guestProfile.create({
+            data: {
+                fullName: body.fullName,
+                email: body.email || undefined,
+                phone: body.phone,
+                dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : undefined,
+                language: body.language,
+                nationality: body.nationality,
+                marketCode: body.marketCode,
+                active: body.active,
+                doNotDisturb: body.doNotDisturb,
+                noPost: body.noPost,
+                document: body.document ? (body.document as any) : (Prisma.JsonNull as any),
+            }
         });
 
         // Audit Log

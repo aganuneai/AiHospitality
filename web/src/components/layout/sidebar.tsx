@@ -56,7 +56,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                     <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                         <NavGroup label="Operacional">
                             <NavItem icon={LayoutDashboard} label="Dashboard" href="/admin" />
-                            <NavItem icon={Calendar} label="Reservas" href="/admin/reservations" />
+                            <NavItem icon={Calendar} label="Reservas" href="/admin/bookings" />
                             <NavItem icon={Users} label="Hóspedes" href="/guests" />
                         </NavGroup>
 

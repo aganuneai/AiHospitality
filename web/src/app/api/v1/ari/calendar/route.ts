@@ -96,7 +96,8 @@ export async function GET(req: NextRequest) {
                     closedToArrival: res?.closedToArrival ?? false,
                     closedToDeparture: res?.closedToDeparture ?? false,
                     closed: res?.closed ?? false
-                }
+                },
+                isManualOverride: false
             };
         });
 

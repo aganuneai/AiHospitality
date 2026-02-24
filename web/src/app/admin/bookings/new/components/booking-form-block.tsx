@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { NeoButton } from "@/components/neo/neo-button"
+import { NeoCard, NeoCardHeader, NeoCardTitle, NeoCardContent } from "@/components/neo/neo-card"
 import { BookingContextBlock } from "./booking-context-block"
 import { DistributionBlock } from "./distribution-block"
 import { GuestBlock } from "./guest-block"
@@ -10,9 +11,12 @@ import { RoomManagerBlock, RoomRequest } from "./room-manager-block"
 import { RateCalculatorBlock } from "./rate-calculator-block"
 import { PaymentBlock } from "./payment-block"
 import { BookingConfirmationBlock } from "./booking-confirmation-block"
+import { BillingResponsibilityBlock, PayerType } from "./billing-responsibility-block"
 import { v4 as uuidv4 } from "uuid"
 import { createReservationSchema } from "@/lib/schemas/booking/reservation-create.schema"
 import { useQuotes } from "@/hooks/use-quotes"
+import { usePartners } from "@/hooks/use-partners"
+import { PieChart } from "lucide-react"
 
 export function BookingFormBlock() {
     const router = useRouter()
@@ -22,16 +26,21 @@ export function BookingFormBlock() {
     // ── State ──────────────────────────────────────────────────────────
     const [checkIn, setCheckIn] = useState<Date | undefined>(new Date())
     const [checkOut, setCheckOut] = useState<Date | undefined>(new Date(Date.now() + 86400000)) // Tomorrow
+    const [checkInTime, setCheckInTime] = useState('14:00')
+    const [checkOutTime, setCheckOutTime] = useState('11:00')
     const [dist, setDist] = useState({ channel: 'DIRECT', source: 'PHONE', agencyId: '', commission: '' })
     const [guest, setGuest] = useState({ holderName: '', holderEmail: '', holderPhone: '', holderDoc: '' })
     const [rooms, setRooms] = useState<RoomRequest[]>([
         { id: '1', roomTypeId: '', adults: 2, children: 0, ratePlanId: '', status: 'PENDING' }
     ])
-    const [payment, setPayment] = useState({ guaranteeType: 'NONE' as any, paymentToken: '' })
+    const [payment, setPayment] = useState({ guaranteeType: 'NONE' as any, paymentToken: '', method: 'CC_PERSONAL', billTo: 'GUEST' as PayerType })
     const [availability, setAvailability] = useState<any[]>([])
     const [inventoryLoading, setInventoryLoading] = useState(false)
 
     // ── Availability & Inventory ──────────────────────────────────────
+    const { partners, loading: partnersLoading } = usePartners()
+    const selectedPartner = partners.find(p => p.id === dist.agencyId)
+
     const fetchAvailability = useCallback(() => {
         if (!checkIn || !checkOut) return
 
@@ -103,23 +112,31 @@ export function BookingFormBlock() {
         setGuest(prev => (prev as any)[field] === value ? prev : { ...prev, [field]: value })
     }, [])
 
-    const handlePaymentChange = useCallback((data: { method: any, card?: any }) => {
+    const handleTimesChange = (field: 'checkInTime' | 'checkOutTime', value: string) => {
+        if (field === 'checkInTime') setCheckInTime(value)
+        else setCheckOutTime(value)
+    }
+
+    const handleBillToChange = (value: PayerType) => {
+        setPayment(prev => ({ ...prev, billTo: value }))
+    }
+
+    const handlePaymentMethodChange = (value: string) => {
         let guaranteeType = 'NONE'
-        if (data.method === 'CREDIT_CARD') guaranteeType = 'CC'
-        if (data.method === 'CASH') guaranteeType = 'PREPAID'
-        setPayment(prev => {
-            const newToken = data.method === 'CREDIT_CARD' ? 'tok_mock_' + data.card?.number?.slice(-4) : ''
-            return prev.guaranteeType === guaranteeType && prev.paymentToken === newToken
-                ? prev
-                : { guaranteeType, paymentToken: newToken }
-        })
-    }, [])
+        if (value === 'CC_PERSONAL') guaranteeType = 'CC'
+        if (value === 'CASH') guaranteeType = 'PREPAID'
+        if (value === 'INVOICE' || value === 'VOUCHER') guaranteeType = 'POSTPAID'
+
+        setPayment(prev => ({ ...prev, method: value, guaranteeType }))
+    }
 
     // ── Step Logic ─────────────────────────────────────────────────────
     const preparePayload = () => {
         return {
             checkIn: checkIn ? format(checkIn, 'yyyy-MM-dd') : undefined,
+            checkInTime,
             checkOut: checkOut ? format(checkOut, 'yyyy-MM-dd') : undefined,
+            checkOutTime,
             channel: dist.channel,
             source: dist.source,
             agencyId: dist.agencyId || undefined,
@@ -134,8 +151,9 @@ export function BookingFormBlock() {
             }),
             guaranteeType: payment.guaranteeType,
             paymentToken: payment.paymentToken || undefined,
+            billTo: payment.billTo,
             quoteId: financials.selectedQuoteIds[0],
-            notes: "Created via Admin Console"
+            notes: "Created via Admin Console (B2B Evolution)"
         }
     }
 
@@ -145,6 +163,10 @@ export function BookingFormBlock() {
         if (!guest.holderName || guest.holderName.length < 3) { toast.warning("Nome do hóspede é obrigatório (mín. 3 caracteres)."); return false }
         if (!guest.holderPhone) { toast.warning("Telefone do hóspede é obrigatório."); return false }
         if (rooms.some(r => !r.roomTypeId)) { toast.warning("Selecione o tipo de quarto para todos os quartos."); return false }
+
+        // B2B Validation
+        if (payment.billTo === 'COMPANY' && !dist.agencyId) { toast.warning("Selecione uma Empresa para faturamento corporativo."); return false }
+        if (payment.billTo === 'AGENCY' && !dist.agencyId) { toast.warning("Selecione uma Agência para faturamento de terceiro."); return false }
 
         const payload = preparePayload()
         const validation = createReservationSchema.safeParse(payload)
@@ -203,12 +225,14 @@ export function BookingFormBlock() {
             <BookingConfirmationBlock
                 data={{
                     checkIn,
+                    checkInTime,
                     checkOut,
+                    checkOutTime,
                     guest,
                     rooms,
                     dist,
                     financials,
-                    payment
+                    payment: { ...payment, paymentToken: payment.paymentToken || '' }
                 }}
                 onBack={() => setStep('ENTRY')}
                 onConfirm={handleFinalConfirm}
@@ -218,53 +242,79 @@ export function BookingFormBlock() {
     }
 
     return (
-        <div className="space-y-6 pb-20 animate-in fade-in duration-700">
-            {/* Premium Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
+        <div className="space-y-8 pb-20 animate-in fade-in duration-700">
+            {/* Premium Header - ZONE A (Top) */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border/40">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-bold tracking-tight font-heading text-foreground">
-                        Nova Reserva
+                    <h1 className="text-4xl font-black tracking-tighter italic font-heading text-foreground">
+                        Nova Reserva <span className="text-indigo-600 text-2xl not-italic ml-2">Premium CRM</span>
                     </h1>
-                    <p className="text-muted-foreground font-medium tracking-wide">
-                        Crie e cote uma nova reserva com rastreamento comercial completo.
+                    <p className="text-muted-foreground font-bold tracking-wide flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Crie e cote uma nova reserva com rastreamento comercial e B2B completo.
                     </p>
                 </div>
-                <div className="flex gap-3">
-                    <button
+                <div className="flex gap-4">
+                    <NeoButton
+                        variant="ghost"
                         onClick={() => router.back()}
-                        className="inline-flex h-10 items-center justify-center rounded-lg border border-border/50 bg-secondary/30 px-4 py-2 text-sm font-semibold text-foreground transition-all hover:bg-secondary hover:text-foreground"
+                        className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-muted-foreground"
                     >
-                        Cancelar
-                    </button>
-                    <button
-                        className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none"
+                        Descartar
+                    </NeoButton>
+                    <NeoButton
+                        className="h-12 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-600/20 transition-all hover:-translate-y-1"
                         onClick={handleGoToConfirmation}
                         disabled={isSubmitting}
                     >
-                        Revisar & Reservar
-                    </button>
+                        Revisar & Confirmar
+                    </NeoButton>
                 </div>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 lg:col-span-8 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <BookingContextBlock
-                            checkIn={checkIn}
-                            checkOut={checkOut}
-                            onDatesChange={(s, e) => { setCheckIn(s); setCheckOut(e) }}
-                            status="PENDING"
-                        />
-                        <DistributionBlock {...dist} onChange={handleDistChange} />
-                    </div>
-                    <GuestBlock
-                        holderName={guest.holderName}
-                        holderEmail={guest.holderEmail}
-                        holderPhone={guest.holderPhone}
-                        holderDoc={guest.holderDoc}
-                        onChange={handleGuestChange}
+            {/* ZONE A: TRIP CONTEXT BAR */}
+            <NeoCard className="bg-secondary/10 border-border/40" glass>
+                <NeoCardContent className="p-6">
+                    <BookingContextBlock
+                        checkIn={checkIn}
+                        checkOut={checkOut}
+                        checkInTime={checkInTime}
+                        checkOutTime={checkOutTime}
+                        onDatesChange={(start, end) => { setCheckIn(start); setCheckOut(end) }}
+                        onTimesChange={handleTimesChange}
+                        status="PENDING"
                     />
+                </NeoCardContent>
+            </NeoCard>
+
+            {/* ZONE B: DECISION GRID (3 COLUMNS) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* COL 1: GUEST */}
+                <GuestBlock
+                    holderName={guest.holderName}
+                    holderEmail={guest.holderEmail}
+                    holderPhone={guest.holderPhone}
+                    holderDoc={guest.holderDoc}
+                    onChange={handleGuestChange}
+                />
+
+                {/* COL 2: DISTRIBUTION & ENTITIES */}
+                <DistributionBlock {...dist} onChange={handleDistChange} />
+
+                {/* COL 3: BILLING & PAYER */}
+                <BillingResponsibilityBlock
+                    billTo={payment.billTo}
+                    setBillTo={handleBillToChange}
+                    paymentMethod={payment.method}
+                    setPaymentMethod={handlePaymentMethodChange}
+                    companyName={dist.channel === 'COMPANY' || dist.channel === 'CORPORATE' ? selectedPartner?.name : undefined}
+                    agencyName={dist.channel === 'AGENCY' || dist.channel === 'OTA' ? selectedPartner?.name : undefined}
+                />
+            </div>
+
+            {/* ZONE C: ROOMING LIST (Full Width) */}
+            <div className="grid grid-cols-12 gap-6 items-start">
+                <div className="col-span-12 lg:col-span-8">
                     <RoomManagerBlock
                         rooms={rooms}
                         availability={availability}
@@ -275,21 +325,42 @@ export function BookingFormBlock() {
                         onUpdateRoom={handleUpdateRoom}
                         quotes={quotes}
                     />
-                    <PaymentBlock onChange={handlePaymentChange} />
                 </div>
 
-                <div className="col-span-12 lg:col-span-4 space-y-6">
+                {/* ZONE D: FINANCIALS */}
+                <div className="col-span-12 lg:col-span-4 space-y-6 sticky top-6">
                     <RateCalculatorBlock
                         subtotal={financials.subtotal}
                         taxes={financials.taxes}
                         discount={0}
                         total={financials.total}
                     />
-                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400">
-                        <strong>Live Rates Active:</strong><br />
-                        Rates are fetched dynamically based on LOS and Occupancy.
-                        {quotesLoading && <span className="block mt-1 animate-pulse">Updating rates...</span>}
-                    </div>
+                    <NeoCard className="bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-600/20 overflow-hidden">
+                        <NeoCardContent className="p-6 flex items-center justify-between group overflow-hidden relative">
+                            <div className="absolute right-0 top-0 opacity-10 -translate-y-4 translate-x-4 rotate-12 transition-transform group-hover:scale-110">
+                                <PieChart className="w-32 h-32 text-white" />
+                            </div>
+                            <div className="relative z-10">
+                                <h4 className="text-white font-black italic tracking-tighter uppercase text-sm mb-1.5">Live Rates Active</h4>
+                                <p className="text-white font-bold text-xs leading-relaxed max-w-[180px]">
+                                    Tarifas inteligentes aplicadas automaticamente com base em ocupação e período.
+                                </p>
+                                {quotesLoading && (
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Recalculando...</span>
+                                    </div>
+                                )}
+                            </div>
+                            <NeoButton
+                                size="sm"
+                                variant="outline"
+                                className="relative z-10 border-white/60 text-white hover:bg-white hover:text-indigo-600 rounded-lg text-xs font-black uppercase tracking-tighter transition-all px-4"
+                            >
+                                Detalhes
+                            </NeoButton>
+                        </NeoCardContent>
+                    </NeoCard>
                 </div>
             </div>
         </div>

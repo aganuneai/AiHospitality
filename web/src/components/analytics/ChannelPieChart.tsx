@@ -10,6 +10,8 @@ import {
 } from 'recharts';
 import { NeoCard, NeoCardContent, NeoCardHeader, NeoCardTitle } from '@/components/neo/neo-card';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface ChannelData {
     channelCode: string;
     revenue: number;
@@ -24,12 +26,8 @@ interface ChannelPieChartProps {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 export function ChannelPieChart({ data, title = 'Revenue by Channel' }: ChannelPieChartProps) {
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'USD',
-            notation: 'compact'
-        }).format(value);
+    const formatValue = (value: number) => {
+        return formatCurrency(value, 'BRL', { notation: 'compact' });
     };
 
     const CustomTooltip = ({ active, payload }: any) => {
@@ -43,7 +41,7 @@ export function ChannelPieChart({ data, title = 'Revenue by Channel' }: ChannelP
                     <div className="space-y-1">
                         <p className="text-sm font-semibold flex items-center justify-between gap-4" style={{ color: payload[0].fill }}>
                             <span>Receita:</span>
-                            <span>{formatCurrency(data.revenue)}</span>
+                            <span>{formatValue(data.revenue)}</span>
                         </p>
                         <p className="text-sm font-semibold text-muted-foreground flex items-center justify-between gap-4">
                             <span>Participação:</span>

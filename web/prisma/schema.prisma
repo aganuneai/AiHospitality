@@ -85,6 +85,12 @@ model Property {
   partners     Partner[]
   calendarEvents CalendarEvent[]
 
+  // Identity & Settings
+  email        String?
+  phone        String?
+  address      String?
+  metadata     Json?    @default("{}")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -338,6 +344,21 @@ model GuestProfile {
   phone       String?
   document    Json? // { type, number, country }
   preferences Json? // { language, smoking, etc }
+
+  // CRM Advanced Fields
+  dateOfBirth DateTime? @db.Date
+  language    String?   @default("pt-BR")
+  nationality String?
+  marketCode  String?   // CORPORATE, LEISURE, GROUP, etc
+  
+  // Flags
+  active        Boolean @default(true)
+  doNotDisturb  Boolean @default(false)
+  noPost        Boolean @default(false) // If true, cannot post charges to folio
+
+  // Loyalty
+  loyaltyTier   String? @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM, DIAMOND
+  loyaltyPoints Int     @default(0)
 
   reservations Reservation[]
 

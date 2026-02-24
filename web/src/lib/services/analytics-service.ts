@@ -444,6 +444,64 @@ export class AnalyticsService {
     }
 
     /**
+     * Get performance metrics grouped by Rate Plan
+     */
+    async getRatePlanPerformance(
+        from: Date,
+        to: Date,
+        hotelId: string
+    ): Promise<any[]> {
+        const reservations = await prisma.reservation.findMany({
+            where: {
+                propertyId: hotelId,
+                checkIn: { gte: from, lte: to },
+                status: { in: ['CONFIRMED', 'CHECKED_OUT'] }
+            },
+            include: {
+                folio: true,
+                ratePlan: true
+            }
+        });
+
+        const performanceMap = new Map<string, any>();
+
+        reservations.forEach(res => {
+            const planCode = res.ratePlanCode || 'BAR';
+            const planName = res.ratePlan?.name || planCode;
+
+            if (!performanceMap.has(planCode)) {
+                performanceMap.set(planCode, {
+                    code: planCode,
+                    name: planName,
+                    revenue: 0,
+                    bookings: 0,
+                    roomNights: 0,
+                    adr: 0,
+                    share: 0
+                });
+            }
+
+            const stats = performanceMap.get(planCode);
+            const folioTotal = Number((res.folio?.totals as any)?.total) || 0;
+            const nights = Math.max(1, Math.ceil((new Date(res.checkOut).getTime() - new Date(res.checkIn).getTime()) / (1000 * 60 * 60 * 24)));
+
+            stats.revenue += folioTotal;
+            stats.bookings += 1;
+            stats.roomNights += nights;
+        });
+
+        const performance = Array.from(performanceMap.values());
+        const totalRevenue = performance.reduce((sum, p) => sum + p.revenue, 0);
+
+        performance.forEach(p => {
+            p.adr = p.roomNights > 0 ? p.revenue / p.roomNights : 0;
+            p.share = totalRevenue > 0 ? (p.revenue / totalRevenue) * 100 : 0;
+        });
+
+        return performance.sort((a, b) => b.revenue - a.revenue);
+    }
+
+    /**
      * Group reservations by time period
      */
     private groupReservationsByPeriod(reservations: any[], groupBy: GroupBy, from: Date, to: Date) {

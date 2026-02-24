@@ -9,7 +9,8 @@ import {
 } from "@/components/neo/neo-table"
 import { NeoDialog, NeoDialogContent, NeoDialogHeader, NeoDialogTitle, NeoDialogDescription, NeoDialogTrigger, NeoDialogBody, NeoDialogActions } from "@/components/neo/neo-dialog"
 import { NeoInput } from "@/components/neo/neo-input"
-import { Hotel, PlusCircle, Pencil, Bed, Users, Download, Trash2, Check, X } from "lucide-react"
+import { Hotel, PlusCircle, Pencil, Bed, Users, Download, Trash2, Check, X, AlertTriangle, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 
 type RoomType = {
     id: string
@@ -29,7 +30,9 @@ export default function RoomTypesPage() {
     const [form, setForm] = useState<Partial<RoomType>>(EMPTY)
     const [editing, setEditing] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [blockingError, setBlockingError] = useState<string | null>(null)
+    const [formError, setFormError] = useState<string | null>(null)
 
     const fetchRoomTypes = () => {
         setLoading(true)
@@ -41,11 +44,11 @@ export default function RoomTypesPage() {
 
     useEffect(() => { fetchRoomTypes() }, [])
 
-    const openCreate = () => { setEditing(null); setForm(EMPTY); setError(null); setDialogOpen(true) }
-    const openEdit = (rt: RoomType) => { setEditing(rt.id); setForm({ ...rt }); setError(null); setDialogOpen(true) }
+    const openCreate = () => { setEditing(null); setForm(EMPTY); setFormError(null); setDialogOpen(true) }
+    const openEdit = (rt: RoomType) => { setEditing(rt.id); setForm({ ...rt }); setFormError(null); setDialogOpen(true) }
 
     const handleSave = async () => {
-        setSaving(true); setError(null)
+        setSaving(true); setFormError(null)
         try {
             const method = editing ? "PUT" : "POST"
             const url = editing ? `/api/v1/admin/room-types/${editing}` : "/api/v1/admin/room-types"
@@ -55,15 +58,32 @@ export default function RoomTypesPage() {
                 body: JSON.stringify(form)
             })
             if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+            toast.success(editing ? "Tipo de quarto atualizado" : "Tipo de quarto criado")
             setDialogOpen(false); fetchRoomTypes()
-        } catch (e: any) { setError(e.message) }
+        } catch (e: any) { setFormError(e.message) }
         finally { setSaving(false) }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Remover este tipo de quarto?")) return
-        await fetch(`/api/v1/admin/room-types/${id}`, { method: "DELETE" })
-        fetchRoomTypes()
+    const handleDelete = async () => {
+        if (!deletingId) return
+        setSaving(true)
+        try {
+            const res = await fetch(`/api/v1/admin/room-types/${deletingId}`, { method: "DELETE" })
+            if (!res.ok) {
+                const data = await res.json()
+                setBlockingError(data.error || "Erro ao excluir tipo de quarto.")
+                setDeletingId(null)
+                return
+            }
+            toast.success("Tipo de quarto excluído com sucesso")
+            setDeletingId(null)
+            fetchRoomTypes()
+        } catch (e: any) {
+            console.error("Delete failed:", e)
+            toast.error("Falha de conexão ao tentar excluir.")
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -91,7 +111,12 @@ export default function RoomTypesPage() {
                             </NeoDialogHeader>
                             <NeoDialogBody>
                                 <div className="space-y-4">
-                                    {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
+                                    {formError && (
+                                        <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg border border-destructive/20 animate-in fade-in slide-in-from-top-1">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {formError}
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Código *</label>
@@ -193,7 +218,7 @@ export default function RoomTypesPage() {
                                                 <button onClick={() => openEdit(rt)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/50 bg-secondary/30 text-xs font-semibold transition-all hover:bg-secondary hover:border-primary/40">
                                                     <Pencil className="h-3 w-3" />Editar
                                                 </button>
-                                                <button onClick={() => handleDelete(rt.id)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-destructive/20 bg-destructive/5 text-xs font-semibold text-destructive transition-all hover:bg-destructive/10">
+                                                <button onClick={() => setDeletingId(rt.id)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-destructive/20 bg-destructive/5 text-xs font-semibold text-destructive transition-all hover:bg-destructive/10">
                                                     <Trash2 className="h-3 w-3" />
                                                 </button>
                                             </div>
@@ -205,6 +230,56 @@ export default function RoomTypesPage() {
                     </NeoTableContainer>
                 </NeoCardContent>
             </NeoCard>
+
+            {/* Modal de Confirmação de Exclusão */}
+            <NeoDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+                <NeoDialogContent className="sm:max-w-[400px]">
+                    <NeoDialogHeader className="bg-destructive/5 border-destructive/10">
+                        <NeoDialogTitle className="text-destructive">Confirmar Exclusão</NeoDialogTitle>
+                        <NeoDialogDescription>Esta ação é irreversível.</NeoDialogDescription>
+                    </NeoDialogHeader>
+                    <NeoDialogBody className="py-6 text-center">
+                        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="h-8 w-8 text-destructive" />
+                        </div>
+                        <p className="font-medium text-foreground">Deseja realmente remover este tipo de quarto?</p>
+                        <p className="text-xs text-muted-foreground mt-2 px-4">O sistema validará se existem dependências ativas antes de prosseguir.</p>
+                    </NeoDialogBody>
+                    <NeoDialogActions>
+                        <button onClick={() => setDeletingId(null)} className="h-10 px-4 rounded-lg border border-border/50 text-sm font-semibold hover:bg-secondary">
+                            Cancelar
+                        </button>
+                        <button onClick={handleDelete} disabled={saving} className="h-10 px-6 rounded-lg bg-destructive text-white text-sm font-semibold shadow-lg shadow-destructive/20 hover:bg-destructive/90 disabled:opacity-50">
+                            {saving ? "Excluindo..." : "Confirmar Exclusão"}
+                        </button>
+                    </NeoDialogActions>
+                </NeoDialogContent>
+            </NeoDialog>
+
+            {/* Modal de Erro de Bloqueio (Governança) */}
+            <NeoDialog open={!!blockingError} onOpenChange={(open) => !open && setBlockingError(null)}>
+                <NeoDialogContent className="sm:max-w-[450px]">
+                    <NeoDialogHeader className="bg-amber-500/5 border-amber-500/10">
+                        <NeoDialogTitle className="text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" /> Bloqueio de Segurança
+                        </NeoDialogTitle>
+                        <NeoDialogDescription>Ação impedida por dependências ativas.</NeoDialogDescription>
+                    </NeoDialogHeader>
+                    <NeoDialogBody className="py-6">
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-sm text-amber-700 font-medium leading-relaxed">
+                            {blockingError}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-4 text-center px-4">
+                            Para excluir este tipo de quarto, você deve primeiro remover ou reatribuir todos os registros vinculados a ele.
+                        </p>
+                    </NeoDialogBody>
+                    <NeoDialogActions>
+                        <button onClick={() => setBlockingError(null)} className="w-full h-11 rounded-lg bg-secondary font-bold text-sm tracking-widest uppercase hover:bg-secondary/80">
+                            Entendi
+                        </button>
+                    </NeoDialogActions>
+                </NeoDialogContent>
+            </NeoDialog>
         </div>
     )
 }
