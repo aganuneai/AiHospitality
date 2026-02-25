@@ -21,17 +21,11 @@ export default function HomePage() {
               Plataforma moderna para reservas online e gerenciamento de propriedades hoteleiras.
               API REST completa, interface intuitiva e 100% em português.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-4">
-              <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-                <Link href="/booking">
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Fazer Reserva
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
-                <Link href="/admin/reservations">
+            <div className="mt-10 flex items-center justify-center">
+              <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-50 px-12 py-6 rounded-xl font-bold tracking-widest uppercase text-sm shadow-xl shadow-white/10 transition-all hover:-translate-y-1">
+                <Link href="/admin/login">
                   <LayoutDashboard className="mr-2 h-5 w-5" />
-                  Dashboard PMS
+                  Entrar no Sistema
                 </Link>
               </Button>
             </div>
@@ -60,16 +54,9 @@ export default function HomePage() {
               <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-white">
                 Reservas Online
               </h3>
-              <p className="mb-4 text-slate-600 dark:text-slate-300">
+              <p className="text-slate-600 dark:text-slate-300">
                 Motor de reservas moderno com busca de disponibilidade, cotações em tempo real e confirmação instantânea.
               </p>
-              <Link
-                href="/booking"
-                className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
-              >
-                Acessar
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
             </div>
 
             {/* Dashboard PMS */}
@@ -80,16 +67,9 @@ export default function HomePage() {
               <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-white">
                 Dashboard PMS
               </h3>
-              <p className="mb-4 text-slate-600 dark:text-slate-300">
+              <p className="text-slate-600 dark:text-slate-300">
                 Gerenciamento completo de reservas com filtros, busca avançada e cancelamento inline.
               </p>
-              <Link
-                href="/admin/reservations"
-                className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400"
-              >
-                Acessar
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
             </div>
 
             {/* API Docs */}
@@ -100,16 +80,9 @@ export default function HomePage() {
               <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-white">
                 API REST
               </h3>
-              <p className="mb-4 text-slate-600 dark:text-slate-300">
+              <p className="text-slate-600 dark:text-slate-300">
                 Documentação interativa Swagger com 6 endpoints, exemplos e playground de testes.
               </p>
-              <Link
-                href="/api-docs"
-                className="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400"
-              >
-                Explorar API
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
             </div>
           </div>
         </div>
@@ -184,15 +157,10 @@ export default function HomePage() {
             Experimente agora o sistema completo de gestão hoteleira
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-              <Link href="/booking">
-                Fazer uma Reserva
+            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-50 px-12 py-6 rounded-xl font-bold tracking-widest uppercase text-sm">
+              <Link href="/admin/login">
+                Entrar no Sistema
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
-              <Link href="/api-docs">
-                Ver Documentação
               </Link>
             </Button>
           </div>
@@ -212,16 +180,13 @@ export default function HomePage() {
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">Navegação</h3>
               <ul className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                <li><Link href="/booking" className="hover:text-blue-600">Reservas</Link></li>
-                <li><Link href="/admin/reservations" className="hover:text-blue-600">Dashboard</Link></li>
-                <li><Link href="/api-docs" className="hover:text-blue-600">API Docs</Link></li>
+                <li><Link href="/admin/login" className="hover:text-blue-600">Entrar no Sistema</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">Recursos</h3>
               <ul className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li><a href="https://github.com" className="hover:text-blue-600">GitHub</a></li>
-                <li><Link href="/api-docs" className="hover:text-blue-600">Documentação</Link></li>
               </ul>
             </div>
           </div>

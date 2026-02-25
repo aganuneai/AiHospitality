@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
         }
 
         const result = await authService.login(email, password);
-
         if (!result) {
             return NextResponse.json(
                 { error: 'Invalid credentials' },
@@ -22,7 +21,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json(result, { status: 200 });
+        const response = NextResponse.json(result, { status: 200 });
+
+        // Set secure HTTP-only cookie for server-side auth (Middleware)
+        response.cookies.set({
+            name: 'auth_token',
+            value: result.token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 // 24 hours
+        });
+
+        return response;
     } catch (error) {
         console.error('Login error:', error);
         return NextResponse.json(

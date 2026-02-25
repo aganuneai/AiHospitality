@@ -97,3 +97,33 @@
 - [x] Resolver conflitos de `zodResolver` no cadastro de Hóspedes.
 - [x] Sincronizar contrato `AriCalendarDay` em todas as rotas de API.
 - [x] Validar build de produção (`npm run build`).
+
+## Fase 20: Tratamento de Legados (React Strict Mode) [x]
+- [x] Analisar origem do aviso `UNSAFE_componentWillReceiveProps`.
+- [x] Atualizar `swagger-ui-react` para versão estável mais recente (5.31.2).
+- [x] Validar supressão/mitigação do aviso no console.
+
+## Fase 21: Reestruturação da Home Page [x]
+- [x] Identificar links operacionais e botões de reserva.
+- [x] Criar plano de implementação para limpeza da Home.
+- [x] Aplicar remoções e redirecionamentos conforme novas definições.
+
+## Fase 22: Segregação de Layout (Segurança Visual) [x]
+- [x] Identificar estrutura de layouts e rotas administrativas.
+- [x] Criar plano de migração para Route Groups.
+- [x] Implementar `admin/(authenticated)/layout.tsx`.
+- [x] Mover módulos administrativos para o novo grupo.
+- [x] Validar isolamento da tela de login.
+
+## Fase 23: Recuperação de Desastre (Acesso Admin) [x]
+- [x] Diagnosticar falha de login (DB Vazio).
+- [x] Executar semente de restauração `seed-admin.ts`.
+- [x] Validar persistência do usuário administrador.
+
+## Fase 24: Implementação de Auth Guard (Zero Trust) [/]
+- [/] Diagnosticar falha de segurança (Acesso bypass).
+- [/] Criar plano de implementação com Cookies HTTP-only.
+- [ ] Implementar Cookies na API de Login.
+- [ ] Reforçar Middleware para proteger `/admin/*`.
+- [ ] Implementar `AuthGuard` de cliente no layout autenticado.
+- [ ] Validar bloqueio de acesso anônimo.

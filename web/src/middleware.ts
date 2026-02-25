@@ -3,46 +3,57 @@ import type { NextRequest } from 'next/server';
 import { parseContext, validateContext } from './lib/context/context';
 
 export function middleware(request: NextRequest) {
-    // Only apply to API routes
-    if (request.nextUrl.pathname.startsWith('/api/v1')) {
-        console.log(`[Middleware] Incoming request: ${request.method} ${request.nextUrl.pathname}`);
+    const { pathname } = request.nextUrl;
 
-        if (request.nextUrl.pathname.endsWith('/health') || request.nextUrl.pathname.startsWith('/api/v1/admin')) {
+    // 1. Proteger rotas Administrativas (Interface)
+    if (pathname.startsWith('/admin')) {
+        // Permitir acesso à tela de login sem token
+        if (pathname === '/admin/login') {
             return NextResponse.next();
         }
-        // Explicitly validate context headers
+
+        const token = request.cookies.get('auth_token')?.value;
+
+        if (!token) {
+            console.log(`[Security] Unauthorized access attempt to ${pathname}. Redirecting to login.`);
+            const loginUrl = new URL('/admin/login', request.url);
+            return NextResponse.redirect(loginUrl);
+        }
+
+        return NextResponse.next();
+    }
+
+    // 2. Proteger rotas de API
+    if (pathname.startsWith('/api/v1')) {
+        console.log(`[Middleware] Incoming API request: ${request.method} ${pathname}`);
+
+        // Rotas públicas de API
+        if (pathname.endsWith('/health') || pathname.startsWith('/api/v1/admin/login')) {
+            return NextResponse.next();
+        }
+
+        // Para APIs internas do admin dentro de v1
+        if (pathname.startsWith('/api/v1/admin')) {
+            const token = request.cookies.get('auth_token')?.value;
+            if (!token) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+        }
+
+        // Validação de contexto legada (se aplicável)
         const validationError = validateContext(request);
         if (validationError) {
             return validationError;
         }
 
         const context = parseContext(request);
-
-        // Additional Path-based validation enforcement
-        if (request.nextUrl.pathname.startsWith('/api/v1/distribution')) {
-            if (context?.domain !== 'DISTRIBUTION') {
-                return NextResponse.json(
-                    {
-                        code: 'CONTEXT_MISMATCH',
-                        message: 'Routes under /api/v1/distribution must have x-domain: DISTRIBUTION',
-                    },
-                    { status: 400 }
-                );
-            }
-        }
-
         if (!context) {
             return NextResponse.json(
-                {
-                    code: 'CONTEXT_INVALID',
-                    message: 'Invalid Context Envelope headers. proper headers required: x-hotel-id XOR x-hub-id, x-domain.',
-                },
+                { code: 'CONTEXT_INVALID', message: 'Invalid Context Envelope headers.' },
                 { status: 400 }
             );
         }
 
-        // Add parsed context to headers for downstream consumption if needed, 
-        // though Next.js Middleware can't easily pass objects, we validate here.
         const response = NextResponse.next();
         response.headers.set('x-context-validated', 'true');
         response.headers.set('x-request-id', context.requestId);
@@ -54,5 +65,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: '/api/:path*',
+    matcher: ['/admin/:path*', '/api/:path*'],
 };
